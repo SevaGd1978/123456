@@ -567,6 +567,22 @@ def get_monthly_trends(months_count: int = 6, db: Session = Depends(get_db)):
         ))
     return res
 
+# ----------------- Скачивание APK для Android -----------------
+@app.api_route("/download/app.apk", methods=["GET", "HEAD"])
+@app.api_route("/download/FamilyBudget_iOS6.apk", methods=["GET", "HEAD"])
+def download_apk():
+    apk_path = "/workspace/apk/FamilyBudget_iOS6.apk"
+    if not os.path.isfile(apk_path):
+        # Fallback to gradle output
+        apk_path = "/workspace/frontend/android/app/build/outputs/apk/debug/app-debug.apk"
+    if os.path.isfile(apk_path):
+        return FileResponse(
+            apk_path,
+            media_type="application/vnd.android.package-archive",
+            filename="FamilyBudget_iOS6.apk"
+        )
+    raise HTTPException(status_code=404, detail="APK файл не найден")
+
 # ----------------- Раздача статики фронтенда (Production / Amvera) -----------------
 FRONTEND_DIST = os.getenv("FRONTEND_DIST", "/workspace/frontend/dist")
 if os.path.isdir(FRONTEND_DIST):

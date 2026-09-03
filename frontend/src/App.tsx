@@ -15,6 +15,8 @@ import { BudgetsAndGoals } from './components/BudgetsAndGoals';
 import { FamilyAndAccounts } from './components/FamilyAndAccounts';
 import { TransactionModal } from './components/TransactionModal';
 import { AuthModal } from './components/AuthModal';
+import { IOS6LockScreen } from './components/IOS6LockScreen';
+import { Lock } from 'lucide-react';
 
 export function App() {
   const [activeTab, setActiveTab] = useState<'dashboard' | 'transactions' | 'budgets' | 'family'>('dashboard');
@@ -22,6 +24,19 @@ export function App() {
   const [currentMonth, setCurrentMonth] = useState<string>('2026-09');
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState<boolean>(false);
+
+  // App Theme Style: 'modern' or 'ios6'
+  const [appStyle, setAppStyle] = useState<'ios6' | 'modern'>(() => {
+    return (localStorage.getItem('family_budget_style') as 'ios6' | 'modern') || 'ios6';
+  });
+
+  // App Lock State (PIN / Biometrics Touch ID)
+  const [isLocked, setIsLocked] = useState<boolean>(() => {
+    return localStorage.getItem('family_budget_locked') !== 'false';
+  });
+  const [savedPin, setSavedPin] = useState<string>(() => {
+    return localStorage.getItem('family_budget_pin') || '1234';
+  });
 
   // Current User / Auth State
   const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -137,23 +152,23 @@ export function App() {
   }, [currentMonth]);
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-900 transition-colors duration-200">
+    <div className={`min-h-screen transition-colors duration-200 ${appStyle === 'ios6' ? 'ios6-stripes text-slate-900 pb-12' : 'bg-slate-50 dark:bg-slate-900'}`}>
       
       {/* Top Navigation Bar */}
-      <header className="sticky top-0 z-40 bg-white/80 dark:bg-slate-850/80 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <header className={`sticky top-0 z-40 ${appStyle === 'ios6' ? 'ios6-navbar text-white' : 'bg-white/80 dark:bg-slate-850/80 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800'}`}>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-14 sm:h-16 flex items-center justify-between">
           
           {/* Logo & App Name */}
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center text-white shadow-md shadow-indigo-500/20">
-              <Wallet className="w-5 h-5" />
+          <div className="flex items-center gap-2.5 sm:gap-3">
+            <div className={`w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center text-white ${appStyle === 'ios6' ? 'bg-gradient-to-b from-blue-400 via-blue-600 to-blue-800 border border-white/60 shadow-[0_2px_4px_rgba(0,0,0,0.5),inset_0_1px_1px_#ffffff]' : 'bg-gradient-to-tr from-indigo-600 to-violet-500 shadow-md shadow-indigo-500/20'}`}>
+              <Wallet className="w-5 h-5 drop-shadow" />
             </div>
             <div>
-              <h1 className="font-extrabold text-slate-900 dark:text-white tracking-tight leading-tight text-base sm:text-lg">
+              <h1 className={`font-extrabold tracking-tight leading-tight text-base sm:text-lg ${appStyle === 'ios6' ? 'text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]' : 'text-slate-900 dark:text-white'}`}>
                 Семейный Бюджет
               </h1>
-              <p className="text-[11px] font-medium text-slate-400">
-                Финансовый центр семьи
+              <p className={`text-[10px] sm:text-[11px] font-medium ${appStyle === 'ios6' ? 'text-blue-100/90 drop-shadow-[0_1px_1px_rgba(0,0,0,0.6)]' : 'text-slate-400'}`}>
+                iOS 6 Edition
               </p>
             </div>
           </div>
@@ -179,6 +194,18 @@ export function App() {
               <span className="hidden sm:inline">Операция</span>
             </button>
 
+            {/* Lock button */}
+            <button
+              onClick={() => {
+                setIsLocked(true);
+                localStorage.setItem('family_budget_locked', 'true');
+              }}
+              title="Заблокировать экран (PIN / Touch ID)"
+              className="p-2 rounded-xl text-slate-500 hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+            >
+              <Lock className="w-4 h-4" />
+            </button>
+
             {/* Refresh */}
             <button
               onClick={fetchAllData}
@@ -186,6 +213,29 @@ export function App() {
               className="p-2 rounded-xl text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition"
             >
               <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+            </button>
+
+            {/* Download APK button */}
+            <a
+              href="/download/FamilyBudget_iOS6.apk"
+              download="FamilyBudget_iOS6.apk"
+              title="Скачать APK для Android (дизайн iOS 6)"
+              className="flex items-center gap-1 px-2.5 py-1 text-xs font-bold rounded-lg border transition shadow-sm ios6-btn-green"
+            >
+              <span>📲 Скачать APK</span>
+            </a>
+
+            {/* iOS 6 / Modern Style Toggle */}
+            <button
+              onClick={() => {
+                const nextStyle = appStyle === 'ios6' ? 'modern' : 'ios6';
+                setAppStyle(nextStyle);
+                localStorage.setItem('family_budget_style', nextStyle);
+              }}
+              title={appStyle === 'ios6' ? "Переключить на Modern стиль" : "Переключить на iOS 6 стиль"}
+              className="px-2.5 py-1 text-xs font-bold rounded-lg border transition shadow-sm ios6-btn-silver"
+            >
+              {appStyle === 'ios6' ? 'iOS 6 ON' : 'Modern'}
             </button>
 
             {/* Dark Mode Toggle */}
@@ -236,13 +286,17 @@ export function App() {
         </div>
 
         {/* Tab Navigation */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex space-x-1 sm:space-x-4 border-t border-slate-100 dark:border-slate-800/60 overflow-x-auto">
+        <div className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex space-x-1 sm:space-x-4 overflow-x-auto ${appStyle === 'ios6' ? 'bg-[#51647d] border-t border-[#3e4f66] py-1 shadow-inner' : 'border-t border-slate-100 dark:border-slate-800/60'}`}>
           <button
             onClick={() => setActiveTab('dashboard')}
-            className={`flex items-center gap-2 py-3 px-3 border-b-2 text-sm font-medium whitespace-nowrap transition-colors ${
-              activeTab === 'dashboard'
-                ? 'border-indigo-600 text-indigo-600 dark:text-indigo-400'
-                : 'border-transparent text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200'
+            className={`flex items-center gap-2 py-2 px-3 text-sm font-medium whitespace-nowrap transition-all ${
+              appStyle === 'ios6'
+                ? activeTab === 'dashboard'
+                  ? 'ios6-btn-blue text-white font-bold py-1.5'
+                  : 'text-slate-200 hover:text-white py-1.5'
+                : activeTab === 'dashboard'
+                  ? 'border-b-2 border-indigo-600 text-indigo-600 dark:text-indigo-400'
+                  : 'border-transparent text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200'
             }`}
           >
             <LayoutDashboard className="w-4 h-4" />
@@ -251,10 +305,14 @@ export function App() {
 
           <button
             onClick={() => setActiveTab('transactions')}
-            className={`flex items-center gap-2 py-3 px-3 border-b-2 text-sm font-medium whitespace-nowrap transition-colors ${
-              activeTab === 'transactions'
-                ? 'border-indigo-600 text-indigo-600 dark:text-indigo-400'
-                : 'border-transparent text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200'
+            className={`flex items-center gap-2 py-2 px-3 text-sm font-medium whitespace-nowrap transition-all ${
+              appStyle === 'ios6'
+                ? activeTab === 'transactions'
+                  ? 'ios6-btn-blue text-white font-bold py-1.5'
+                  : 'text-slate-200 hover:text-white py-1.5'
+                : activeTab === 'transactions'
+                  ? 'border-b-2 border-indigo-600 text-indigo-600 dark:text-indigo-400'
+                  : 'border-transparent text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200'
             }`}
           >
             <ReceiptText className="w-4 h-4" />
@@ -263,10 +321,14 @@ export function App() {
 
           <button
             onClick={() => setActiveTab('budgets')}
-            className={`flex items-center gap-2 py-3 px-3 border-b-2 text-sm font-medium whitespace-nowrap transition-colors ${
-              activeTab === 'budgets'
-                ? 'border-indigo-600 text-indigo-600 dark:text-indigo-400'
-                : 'border-transparent text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200'
+            className={`flex items-center gap-2 py-2 px-3 text-sm font-medium whitespace-nowrap transition-all ${
+              appStyle === 'ios6'
+                ? activeTab === 'budgets'
+                  ? 'ios6-btn-blue text-white font-bold py-1.5'
+                  : 'text-slate-200 hover:text-white py-1.5'
+                : activeTab === 'budgets'
+                  ? 'border-b-2 border-indigo-600 text-indigo-600 dark:text-indigo-400'
+                  : 'border-transparent text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200'
             }`}
           >
             <PieChart className="w-4 h-4" />
@@ -275,10 +337,14 @@ export function App() {
 
           <button
             onClick={() => setActiveTab('family')}
-            className={`flex items-center gap-2 py-3 px-3 border-b-2 text-sm font-medium whitespace-nowrap transition-colors ${
-              activeTab === 'family'
-                ? 'border-indigo-600 text-indigo-600 dark:text-indigo-400'
-                : 'border-transparent text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200'
+            className={`flex items-center gap-2 py-2 px-3 text-sm font-medium whitespace-nowrap transition-all ${
+              appStyle === 'ios6'
+                ? activeTab === 'family'
+                  ? 'ios6-btn-blue text-white font-bold py-1.5'
+                  : 'text-slate-200 hover:text-white py-1.5'
+                : activeTab === 'family'
+                  ? 'border-b-2 border-indigo-600 text-indigo-600 dark:text-indigo-400'
+                  : 'border-transparent text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200'
             }`}
           >
             <Users className="w-4 h-4" />
@@ -351,6 +417,18 @@ export function App() {
         onClose={() => setIsAuthModalOpen(false)}
         onLoginSuccess={handleLoginSuccess}
       />
+
+      {/* iOS 6 Lock Screen (PIN & Touch ID) */}
+      {isLocked && (
+        <IOS6LockScreen
+          savedPin={savedPin}
+          onSetPin={(newPin) => setSavedPin(newPin)}
+          onUnlock={() => {
+            setIsLocked(false);
+            localStorage.setItem('family_budget_locked', 'false');
+          }}
+        />
+      )}
     </div>
   );
 }

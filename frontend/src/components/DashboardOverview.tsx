@@ -57,9 +57,9 @@ export const DashboardOverview: React.FC<Props> = ({
       {/* 4 Summary Stat Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Total Balance */}
-        <div className="bg-white dark:bg-slate-800 rounded-2xl p-5 border border-slate-100 dark:border-slate-700/80 shadow-sm flex items-center justify-between">
+        <div className="bg-white dark:bg-slate-800 rounded-2xl p-5 border border-slate-200/90 dark:border-slate-700/80 shadow-sm flex items-center justify-between">
           <div>
-            <p className="text-xs uppercase font-semibold tracking-wider text-slate-400">Общий капитал семьи</p>
+            <p className="text-xs uppercase font-semibold tracking-wider text-slate-500 dark:text-slate-400">Общий капитал семьи</p>
             <h3 className="text-2xl font-black text-slate-900 dark:text-white mt-1">
               {formatMoney(summary?.total_balance || 0)}
             </h3>
@@ -73,9 +73,9 @@ export const DashboardOverview: React.FC<Props> = ({
         </div>
 
         {/* Month Income */}
-        <div className="bg-white dark:bg-slate-800 rounded-2xl p-5 border border-slate-100 dark:border-slate-700/80 shadow-sm flex items-center justify-between">
+        <div className="bg-white dark:bg-slate-800 rounded-2xl p-5 border border-slate-200/90 dark:border-slate-700/80 shadow-sm flex items-center justify-between">
           <div>
-            <p className="text-xs uppercase font-semibold tracking-wider text-slate-400">Доходы за месяц</p>
+            <p className="text-xs uppercase font-semibold tracking-wider text-slate-500 dark:text-slate-400">Доходы за месяц</p>
             <h3 className="text-2xl font-black text-emerald-600 dark:text-emerald-400 mt-1">
               +{formatMoney(summary?.total_income || 0)}
             </h3>
@@ -89,9 +89,9 @@ export const DashboardOverview: React.FC<Props> = ({
         </div>
 
         {/* Month Expenses */}
-        <div className="bg-white dark:bg-slate-800 rounded-2xl p-5 border border-slate-100 dark:border-slate-700/80 shadow-sm flex items-center justify-between">
+        <div className="bg-white dark:bg-slate-800 rounded-2xl p-5 border border-slate-200/90 dark:border-slate-700/80 shadow-sm flex items-center justify-between">
           <div>
-            <p className="text-xs uppercase font-semibold tracking-wider text-slate-400">Расходы за месяц</p>
+            <p className="text-xs uppercase font-semibold tracking-wider text-slate-500 dark:text-slate-400">Расходы за месяц</p>
             <h3 className="text-2xl font-black text-rose-600 dark:text-rose-400 mt-1">
               -{formatMoney(summary?.total_expense || 0)}
             </h3>
@@ -105,9 +105,9 @@ export const DashboardOverview: React.FC<Props> = ({
         </div>
 
         {/* Net Savings */}
-        <div className="bg-white dark:bg-slate-800 rounded-2xl p-5 border border-slate-100 dark:border-slate-700/80 shadow-sm flex items-center justify-between">
+        <div className="bg-white dark:bg-slate-800 rounded-2xl p-5 border border-slate-200/90 dark:border-slate-700/80 shadow-sm flex items-center justify-between">
           <div>
-            <p className="text-xs uppercase font-semibold tracking-wider text-slate-400">Чистая дельта (Сбережения)</p>
+            <p className="text-xs uppercase font-semibold tracking-wider text-slate-500 dark:text-slate-400">Чистая дельта (Сбережения)</p>
             <h3 className={`text-2xl font-black mt-1 ${(summary?.net_savings || 0) >= 0 ? 'text-indigo-600 dark:text-indigo-400' : 'text-rose-600 dark:text-rose-400'}`}>
               {(summary?.net_savings || 0) >= 0 ? '+' : ''}{formatMoney(summary?.net_savings || 0)}
             </h3>
