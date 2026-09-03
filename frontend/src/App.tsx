@@ -16,7 +16,8 @@ import { FamilyAndAccounts } from './components/FamilyAndAccounts';
 import { TransactionModal } from './components/TransactionModal';
 import { AuthModal } from './components/AuthModal';
 import { IOS6LockScreen } from './components/IOS6LockScreen';
-import { Lock } from 'lucide-react';
+import { SettingsSheet } from './components/SettingsSheet';
+import { Lock, Menu } from 'lucide-react';
 import { apiFetch, getApiBaseUrl, setApiBaseUrl, DEFAULT_REMOTE_URL } from './api';
 
 export function App() {
@@ -25,6 +26,7 @@ export function App() {
   const [currentMonth, setCurrentMonth] = useState<string>('2026-09');
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState<boolean>(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
 
   // App Theme Style: 'modern' or 'ios6'
   const [appStyle, setAppStyle] = useState<'ios6' | 'modern'>(() => {
@@ -156,207 +158,207 @@ export function App() {
       
       {/* Top Navigation Bar */}
       <header className={`sticky top-0 z-40 ${appStyle === 'ios6' ? 'ios6-navbar text-white' : 'bg-white/80 dark:bg-slate-850/80 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800'}`}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 min-h-[56px] py-1.5 flex flex-wrap items-center justify-between gap-2">
+        {/* Strictly single row: fits any screen width (from 320px to 4K) */}
+        <div className="max-w-7xl mx-auto px-2.5 sm:px-4 lg:px-8 h-12 sm:h-14 flex items-center justify-between gap-1.5 sm:gap-3">
           
           {/* Logo & App Name */}
-          <div className="flex items-center gap-2.5 sm:gap-3">
-            <div className={`w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center text-white ${appStyle === 'ios6' ? 'bg-gradient-to-b from-blue-400 via-blue-600 to-blue-800 border border-white/60 shadow-[0_2px_4px_rgba(0,0,0,0.5),inset_0_1px_1px_#ffffff]' : 'bg-gradient-to-tr from-indigo-600 to-violet-500 shadow-md shadow-indigo-500/20'}`}>
-              <Wallet className="w-5 h-5 drop-shadow" />
+          <div className="flex items-center gap-1.5 sm:gap-2.5 min-w-0 shrink">
+            <div className={`w-8 h-8 rounded-xl flex items-center justify-center text-white shrink-0 ${appStyle === 'ios6' ? 'bg-gradient-to-b from-blue-400 via-blue-600 to-blue-800 border border-white/60 shadow-[0_2px_4px_rgba(0,0,0,0.5),inset_0_1px_1px_#ffffff]' : 'bg-gradient-to-tr from-indigo-600 to-violet-500 shadow-md shadow-indigo-500/20'}`}>
+              <Wallet className="w-4 h-4 sm:w-5 sm:h-5 drop-shadow" />
             </div>
-            <div>
-              <h1 className={`font-extrabold tracking-tight leading-tight text-base sm:text-lg ${appStyle === 'ios6' ? 'text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]' : 'text-slate-900 dark:text-white'}`}>
+            <div className="min-w-0">
+              <h1 className={`font-extrabold tracking-tight leading-tight text-xs sm:text-base md:text-lg truncate ${appStyle === 'ios6' ? 'text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]' : 'text-slate-900 dark:text-white'}`}>
                 Семейный Бюджет
               </h1>
-              <p className={`text-[10px] sm:text-[11px] font-medium ${appStyle === 'ios6' ? 'text-blue-100/90 drop-shadow-[0_1px_1px_rgba(0,0,0,0.6)]' : 'text-slate-400'}`}>
+              <p className={`hidden md:block text-[10px] font-medium leading-none ${appStyle === 'ios6' ? 'text-blue-100/90 drop-shadow-[0_1px_1px_rgba(0,0,0,0.6)]' : 'text-slate-400'}`}>
                 iOS 6 Edition
               </p>
             </div>
           </div>
 
-          {/* Month Picker & Quick Action & Controls & Auth */}
-          <div className="flex items-center gap-2 sm:gap-3">
-            {/* Month select */}
-            <div className="relative">
-              <input
-                type="month"
-                value={currentMonth}
-                onChange={e => setCurrentMonth(e.target.value)}
-                className="text-xs sm:text-sm font-semibold px-2.5 sm:px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer"
-              />
-            </div>
+          {/* Right: Controls & Actions */}
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+            {/* Month select: compact */}
+            <input
+              type="month"
+              value={currentMonth}
+              onChange={e => setCurrentMonth(e.target.value)}
+              className={`text-xs font-semibold px-1.5 sm:px-2 py-1 rounded-lg border focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer ${
+                appStyle === 'ios6' 
+                  ? 'bg-black/30 text-white border-white/30 shadow-inner' 
+                  : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-white'
+              }`}
+              style={{ width: '100px' }}
+            />
 
             {/* Quick Add Button */}
             <button
               onClick={() => setIsModalOpen(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs sm:text-sm font-semibold shadow-md shadow-indigo-500/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
+              className={`flex items-center gap-1 px-2 sm:px-3 py-1 text-xs font-bold rounded-lg transition-all active:scale-95 shrink-0 ${
+                appStyle === 'ios6' 
+                  ? 'ios6-btn-green text-white' 
+                  : 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm'
+              }`}
             >
-              <PlusCircle className="w-4 h-4" />
-              <span className="hidden sm:inline">Операция</span>
+              <PlusCircle className="w-3.5 h-3.5" />
+              <span className="hidden xs:inline">Операция</span>
             </button>
 
-            {/* Lock button */}
-            <button
-              onClick={() => {
-                setIsLocked(true);
-                localStorage.setItem('family_budget_locked', 'true');
-              }}
-              title="Заблокировать экран (PIN / Touch ID)"
-              className="p-2 rounded-xl text-slate-500 hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
-            >
-              <Lock className="w-4 h-4" />
-            </button>
+            {/* Desktop Direct Quick Actions (hidden on mobile, visible on desktop >= lg) */}
+            <div className="hidden lg:flex items-center gap-2 pl-1 border-l border-white/20 dark:border-slate-700">
+              {/* Lock button */}
+              <button
+                onClick={() => {
+                  setIsLocked(true);
+                  localStorage.setItem('family_budget_locked', 'true');
+                }}
+                title="Заблокировать экран (PIN / Touch ID)"
+                className={`p-1.5 rounded-lg text-xs font-bold transition ${appStyle === 'ios6' ? 'ios6-btn-silver text-slate-800' : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white'}`}
+              >
+                <Lock className="w-3.5 h-3.5" />
+              </button>
 
-            {/* Refresh */}
-            <button
-              onClick={fetchAllData}
-              title="Обновить данные"
-              className="p-2 rounded-xl text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition"
-            >
-              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-            </button>
+              {/* Download APK button */}
+              <a
+                href="/download/FamilyBudget_iOS6.apk"
+                download="FamilyBudget_iOS6.apk"
+                title="Скачать APK для Android"
+                className="flex items-center gap-1 px-2 py-1 text-xs font-bold rounded-lg border transition shadow-sm ios6-btn-green"
+              >
+                <span>📲 APK</span>
+              </a>
 
-            {/* Download APK button */}
-            <a
-              href="/download/FamilyBudget_iOS6.apk"
-              download="FamilyBudget_iOS6.apk"
-              title="Скачать APK для Android (дизайн iOS 6)"
-              className="flex items-center gap-1 px-2.5 py-1 text-xs font-bold rounded-lg border transition shadow-sm ios6-btn-green"
-            >
-              <span>📲 Скачать APK</span>
-            </a>
+              {/* Style toggle */}
+              <button
+                onClick={() => {
+                  const nextStyle = appStyle === 'ios6' ? 'modern' : 'ios6';
+                  setAppStyle(nextStyle);
+                  localStorage.setItem('family_budget_style', nextStyle);
+                }}
+                className="px-2 py-1 text-xs font-bold rounded-lg border transition shadow-sm ios6-btn-silver"
+              >
+                {appStyle === 'ios6' ? 'iOS 6' : 'Modern'}
+              </button>
 
-            {/* iOS 6 / Modern Style Toggle */}
-            <button
-              onClick={() => {
-                const nextStyle = appStyle === 'ios6' ? 'modern' : 'ios6';
-                setAppStyle(nextStyle);
-                localStorage.setItem('family_budget_style', nextStyle);
-              }}
-              title={appStyle === 'ios6' ? "Переключить на Modern стиль" : "Переключить на iOS 6 стиль"}
-              className="px-2.5 py-1 text-xs font-bold rounded-lg border transition shadow-sm ios6-btn-silver"
-            >
-              {appStyle === 'ios6' ? 'iOS 6 ON' : 'Modern'}
-            </button>
+              {/* Dark mode */}
+              <button
+                onClick={() => setDarkMode(!darkMode)}
+                className={`p-1.5 rounded-lg text-xs font-bold transition ${appStyle === 'ios6' ? 'ios6-btn-silver text-slate-800' : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white'}`}
+              >
+                {darkMode ? <Sun className="w-3.5 h-3.5 text-amber-400" /> : <Moon className="w-3.5 h-3.5 text-slate-600" />}
+              </button>
 
-            {/* Dark Mode Toggle */}
-            <button
-              onClick={() => setDarkMode(!darkMode)}
-              title={darkMode ? "Светлая тема" : "Темная тема"}
-              className="p-2 rounded-xl text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition"
-            >
-              {darkMode ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-slate-600" />}
-            </button>
+              {/* Refresh */}
+              <button
+                onClick={fetchAllData}
+                title="Обновить данные"
+                className={`p-1.5 rounded-lg text-xs font-bold transition ${appStyle === 'ios6' ? 'ios6-btn-silver text-slate-800' : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white'}`}
+              >
+                <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
+              </button>
 
-            {/* User Account / Auth Section */}
-            {currentUser ? (
-              <div className="flex items-center gap-2 pl-2 border-l border-slate-200 dark:border-slate-700">
+              {/* User Profile Avatar / Login on desktop */}
+              {currentUser ? (
                 <div 
-                  className="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-xs shadow-sm cursor-pointer"
+                  onClick={() => setIsSettingsOpen(true)}
+                  className="w-7 h-7 rounded-full flex items-center justify-center text-white font-bold text-xs shadow-sm cursor-pointer border border-white/40 shrink-0 ml-1"
                   style={{ backgroundColor: currentUser.avatar_color || '#3b82f6' }}
-                  title={`${currentUser.full_name} (${currentUser.role || 'Член семьи'}) - ${currentUser.email}`}
+                  title={`${currentUser.full_name} (${currentUser.role || 'Член семьи'})`}
                 >
                   {currentUser.full_name.charAt(0).toUpperCase()}
                 </div>
-                <div className="hidden md:block text-left">
-                  <p className="text-xs font-bold text-slate-800 dark:text-white leading-tight">
-                    {currentUser.full_name}
-                  </p>
-                  <p className="text-[10px] text-slate-400 leading-tight">
-                    {currentUser.role || 'Член семьи'}
-                  </p>
-                </div>
+              ) : (
                 <button
-                  onClick={handleLogout}
-                  title="Выйти из учетной записи"
-                  className="p-2 rounded-xl text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/30 transition"
+                  onClick={() => setIsAuthModalOpen(true)}
+                  className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold transition shrink-0 ml-1 ${
+                    appStyle === 'ios6' ? 'ios6-btn-blue text-white' : 'border border-indigo-600 text-indigo-600 dark:text-indigo-400'
+                  }`}
                 >
-                  <LogOut className="w-4 h-4" />
+                  <LogIn className="w-3.5 h-3.5" />
+                  <span>Войти</span>
                 </button>
-              </div>
-            ) : (
-              <button
-                onClick={() => setIsAuthModalOpen(true)}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-indigo-600 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 text-xs sm:text-sm font-semibold transition"
-              >
-                <LogIn className="w-4 h-4" />
-                <span>Войти</span>
-              </button>
-            )}
-
-            {/* Sync status indicator */}
-            <div 
-              title={getApiBaseUrl() ? `Синхронизация с сервером: ${getApiBaseUrl()}` : "Синхронизация активна (Локально/Cloud)"}
-              className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700 select-none"
-            >
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-              <span className="hidden lg:inline">Онлайн</span>
+              )}
             </div>
+
+            {/* Menu / Settings Button (opens SettingsSheet) */}
+            <button
+              onClick={() => setIsSettingsOpen(true)}
+              title="Параметры и управление"
+              className={`flex items-center gap-1 px-2 py-1 rounded-lg transition shrink-0 ${
+                appStyle === 'ios6' ? 'ios6-btn-silver text-slate-800' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200'
+              }`}
+            >
+              <Menu className="w-4 h-4 text-slate-800 dark:text-white" />
+              <span className="text-xs font-semibold">Опции</span>
+            </button>
           </div>
         </div>
 
-        {/* Tab Navigation */}
-        <div className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex space-x-1 sm:space-x-4 overflow-x-auto ${appStyle === 'ios6' ? 'bg-[#51647d] border-t border-[#3e4f66] py-1 shadow-inner' : 'border-t border-slate-100 dark:border-slate-800/60'}`}>
+        {/* Tab Navigation row: horizontally scrollable with no visible scrollbar */}
+        <div className={`max-w-7xl mx-auto px-2 sm:px-4 lg:px-8 flex space-x-1 sm:space-x-2 overflow-x-auto no-scrollbar py-1 ${
+          appStyle === 'ios6' ? 'bg-[#51647d] border-t border-[#3e4f66] shadow-inner' : 'border-t border-slate-100 dark:border-slate-800/60'
+        }`}>
           <button
             onClick={() => setActiveTab('dashboard')}
-            className={`flex items-center gap-2 py-2 px-3 text-sm font-medium whitespace-nowrap transition-all ${
+            className={`flex items-center gap-1.5 py-1 px-2.5 text-xs sm:text-sm font-medium whitespace-nowrap transition-all rounded-lg shrink-0 ${
               appStyle === 'ios6'
                 ? activeTab === 'dashboard'
-                  ? 'ios6-btn-blue text-white font-bold py-1.5'
-                  : 'text-slate-200 hover:text-white py-1.5'
+                  ? 'ios6-btn-blue text-white font-bold shadow'
+                  : 'text-slate-200 hover:text-white'
                 : activeTab === 'dashboard'
-                  ? 'border-b-2 border-indigo-600 text-indigo-600 dark:text-indigo-400'
-                  : 'border-transparent text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200'
+                  ? 'bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 font-bold'
+                  : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200'
             }`}
           >
-            <LayoutDashboard className="w-4 h-4" />
-            Сводка и Аналитика
+            <LayoutDashboard className="w-3.5 h-3.5" />
+            Сводка
           </button>
 
           <button
             onClick={() => setActiveTab('transactions')}
-            className={`flex items-center gap-2 py-2 px-3 text-sm font-medium whitespace-nowrap transition-all ${
+            className={`flex items-center gap-1.5 py-1 px-2.5 text-xs sm:text-sm font-medium whitespace-nowrap transition-all rounded-lg shrink-0 ${
               appStyle === 'ios6'
                 ? activeTab === 'transactions'
-                  ? 'ios6-btn-blue text-white font-bold py-1.5'
-                  : 'text-slate-200 hover:text-white py-1.5'
+                  ? 'ios6-btn-blue text-white font-bold shadow'
+                  : 'text-slate-200 hover:text-white'
                 : activeTab === 'transactions'
-                  ? 'border-b-2 border-indigo-600 text-indigo-600 dark:text-indigo-400'
-                  : 'border-transparent text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200'
+                  ? 'bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 font-bold'
+                  : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200'
             }`}
           >
-            <ReceiptText className="w-4 h-4" />
+            <ReceiptText className="w-3.5 h-3.5" />
             Операции ({transactions.length})
           </button>
 
           <button
             onClick={() => setActiveTab('budgets')}
-            className={`flex items-center gap-2 py-2 px-3 text-sm font-medium whitespace-nowrap transition-all ${
+            className={`flex items-center gap-1.5 py-1 px-2.5 text-xs sm:text-sm font-medium whitespace-nowrap transition-all rounded-lg shrink-0 ${
               appStyle === 'ios6'
                 ? activeTab === 'budgets'
-                  ? 'ios6-btn-blue text-white font-bold py-1.5'
-                  : 'text-slate-200 hover:text-white py-1.5'
+                  ? 'ios6-btn-blue text-white font-bold shadow'
+                  : 'text-slate-200 hover:text-white'
                 : activeTab === 'budgets'
-                  ? 'border-b-2 border-indigo-600 text-indigo-600 dark:text-indigo-400'
-                  : 'border-transparent text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200'
+                  ? 'bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 font-bold'
+                  : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200'
             }`}
           >
-            <PieChart className="w-4 h-4" />
+            <PieChart className="w-3.5 h-3.5" />
             Бюджеты и Цели ({budgets.length + goals.length})
           </button>
 
           <button
             onClick={() => setActiveTab('family')}
-            className={`flex items-center gap-2 py-2 px-3 text-sm font-medium whitespace-nowrap transition-all ${
+            className={`flex items-center gap-1.5 py-1 px-2.5 text-xs sm:text-sm font-medium whitespace-nowrap transition-all rounded-lg shrink-0 ${
               appStyle === 'ios6'
                 ? activeTab === 'family'
-                  ? 'ios6-btn-blue text-white font-bold py-1.5'
-                  : 'text-slate-200 hover:text-white py-1.5'
+                  ? 'ios6-btn-blue text-white font-bold shadow'
+                  : 'text-slate-200 hover:text-white'
                 : activeTab === 'family'
-                  ? 'border-b-2 border-indigo-600 text-indigo-600 dark:text-indigo-400'
-                  : 'border-transparent text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200'
+                  ? 'bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 font-bold'
+                  : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200'
             }`}
           >
-            <Users className="w-4 h-4" />
+            <Users className="w-3.5 h-3.5" />
             Семья и Счета ({members.length})
           </button>
         </div>
@@ -425,6 +427,29 @@ export function App() {
         isOpen={isAuthModalOpen}
         onClose={() => setIsAuthModalOpen(false)}
         onLoginSuccess={handleLoginSuccess}
+      />
+
+      {/* Settings & Options Sheet (S25 Ultra / Mobile & Desktop) */}
+      <SettingsSheet
+        isOpen={isSettingsOpen}
+        onClose={() => setIsSettingsOpen(false)}
+        appStyle={appStyle}
+        onToggleStyle={() => {
+          const nextStyle = appStyle === 'ios6' ? 'modern' : 'ios6';
+          setAppStyle(nextStyle);
+          localStorage.setItem('family_budget_style', nextStyle);
+        }}
+        darkMode={darkMode}
+        onToggleDarkMode={() => setDarkMode(!darkMode)}
+        onLockScreen={() => {
+          setIsLocked(true);
+          localStorage.setItem('family_budget_locked', 'true');
+        }}
+        onRefreshData={fetchAllData}
+        isLoading={loading}
+        currentUser={currentUser}
+        onOpenAuth={() => setIsAuthModalOpen(true)}
+        onLogout={handleLogout}
       />
 
       {/* iOS 6 Lock Screen (PIN & Touch ID) */}
