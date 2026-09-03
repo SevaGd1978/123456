@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import { Transaction, Account, Category, FamilyMember } from '../types';
 import { formatMoney } from '../utils';
+import { apiFetch } from '../api';
 
 interface Props {
   transactions: Transaction[];
@@ -31,7 +32,7 @@ export const TransactionsView: React.FC<Props> = ({
 
   const handleDelete = async (id: number) => {
     if (!confirm('Вы уверены, что хотите удалить эту операцию? Баланс счета будет скорректирован.')) return;
-    await fetch(`/api/transactions/${id}`, { method: 'DELETE' });
+    await apiFetch(`/api/transactions/${id}`, { method: 'DELETE' });
     onRefresh();
   };
 

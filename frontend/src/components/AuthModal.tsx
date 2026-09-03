@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { LogIn, UserPlus, X, Mail, Lock, User, AlertCircle } from 'lucide-react';
 import { User as UserType } from '../types';
+import { apiFetch } from '../api';
 
 interface Props {
   isOpen: boolean;
@@ -31,7 +32,7 @@ export const AuthModal: React.FC<Props> = ({ isOpen, onClose, onLoginSuccess }) 
         ? { email, password, full_name: fullName, role, avatar_color: avatarColor }
         : { email, password };
 
-      const res = await fetch(endpoint, {
+      const res = await apiFetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),

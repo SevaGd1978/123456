@@ -4,6 +4,7 @@ import {
   ArrowRightLeft, ArrowDownLeft, ArrowUpRight, X 
 } from 'lucide-react';
 import { Account, Category, FamilyMember } from '../types';
+import { apiFetch } from '../api';
 
 interface Props {
   accounts: Account[];
@@ -78,13 +79,9 @@ export const TransactionModal: React.FC<Props> = ({
         payload.member_id = memberId;
       }
 
-      const token = localStorage.getItem('auth_token');
-      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-      if (token) headers['Authorization'] = `Bearer ${token}`;
-
-      const res = await fetch('/api/transactions', {
+      const res = await apiFetch('/api/transactions', {
         method: 'POST',
-        headers,
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
 

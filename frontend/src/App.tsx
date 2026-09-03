@@ -17,6 +17,7 @@ import { TransactionModal } from './components/TransactionModal';
 import { AuthModal } from './components/AuthModal';
 import { IOS6LockScreen } from './components/IOS6LockScreen';
 import { Lock } from 'lucide-react';
+import { apiFetch, getApiBaseUrl, setApiBaseUrl, DEFAULT_REMOTE_URL } from './api';
 
 export function App() {
   const [activeTab, setActiveTab] = useState<'dashboard' | 'transactions' | 'budgets' | 'family'>('dashboard');
@@ -105,7 +106,6 @@ export function App() {
   const fetchAllData = async () => {
     try {
       setLoading(true);
-      const headers = getAuthHeaders();
       const [
         membersRes,
         accountsRes,
@@ -118,16 +118,16 @@ export function App() {
         memStatsRes,
         trendsRes
       ] = await Promise.all([
-        fetch('/api/members', { headers }).then(r => r.json()),
-        fetch('/api/accounts', { headers }).then(r => r.json()),
-        fetch('/api/categories', { headers }).then(r => r.json()),
-        fetch(`/api/transactions?month=${currentMonth}`, { headers }).then(r => r.json()),
-        fetch(`/api/budgets?month=${currentMonth}`, { headers }).then(r => r.json()),
-        fetch('/api/goals', { headers }).then(r => r.json()),
-        fetch(`/api/analytics/summary?month=${currentMonth}`, { headers }).then(r => r.json()),
-        fetch(`/api/analytics/categories?month=${currentMonth}`, { headers }).then(r => r.json()),
-        fetch(`/api/analytics/members?month=${currentMonth}`, { headers }).then(r => r.json()),
-        fetch('/api/analytics/monthly-trends?months_count=6', { headers }).then(r => r.json())
+        apiFetch('/api/members').then(r => r.json()),
+        apiFetch('/api/accounts').then(r => r.json()),
+        apiFetch('/api/categories').then(r => r.json()),
+        apiFetch(`/api/transactions?month=${currentMonth}`).then(r => r.json()),
+        apiFetch(`/api/budgets?month=${currentMonth}`).then(r => r.json()),
+        apiFetch('/api/goals').then(r => r.json()),
+        apiFetch(`/api/analytics/summary?month=${currentMonth}`).then(r => r.json()),
+        apiFetch(`/api/analytics/categories?month=${currentMonth}`).then(r => r.json()),
+        apiFetch(`/api/analytics/members?month=${currentMonth}`).then(r => r.json()),
+        apiFetch('/api/analytics/monthly-trends?months_count=6').then(r => r.json())
       ]);
 
       setMembers(membersRes || []);
@@ -282,6 +282,15 @@ export function App() {
                 <span>Войти</span>
               </button>
             )}
+
+            {/* Sync status indicator */}
+            <div 
+              title={getApiBaseUrl() ? `Синхронизация с сервером: ${getApiBaseUrl()}` : "Синхронизация активна (Локально/Cloud)"}
+              className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700 select-none"
+            >
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+              <span className="hidden lg:inline">Онлайн</span>
+            </div>
           </div>
         </div>
 

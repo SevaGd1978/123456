@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import { Account, FamilyMember } from '../types';
 import { formatMoney } from '../utils';
+import { apiFetch } from '../api';
 
 interface Props {
   members: FamilyMember[];
@@ -30,7 +31,7 @@ export const FamilyAndAccounts: React.FC<Props> = ({ members, accounts, onRefres
     e.preventDefault();
     if (!memberName.trim()) return;
 
-    await fetch('/api/members', {
+    await apiFetch('/api/members', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -47,7 +48,7 @@ export const FamilyAndAccounts: React.FC<Props> = ({ members, accounts, onRefres
 
   const handleDeleteMember = async (id: number) => {
     if (!confirm('Удалить члена семьи? Все связанные операции останутся без привязки.')) return;
-    await fetch(`/api/members/${id}`, { method: 'DELETE' });
+    await apiFetch(`/api/members/${id}`, { method: 'DELETE' });
     onRefresh();
   };
 
@@ -55,7 +56,7 @@ export const FamilyAndAccounts: React.FC<Props> = ({ members, accounts, onRefres
     e.preventDefault();
     if (!accountName.trim()) return;
 
-    await fetch('/api/accounts', {
+    await apiFetch('/api/accounts', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -75,7 +76,7 @@ export const FamilyAndAccounts: React.FC<Props> = ({ members, accounts, onRefres
 
   const handleDeleteAccount = async (id: number) => {
     if (!confirm('Удалить счет? Это приведет к удалению всех операций по этому счету.')) return;
-    await fetch(`/api/accounts/${id}`, { method: 'DELETE' });
+    await apiFetch(`/api/accounts/${id}`, { method: 'DELETE' });
     onRefresh();
   };
 

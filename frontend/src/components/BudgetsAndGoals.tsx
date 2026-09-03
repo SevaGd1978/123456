@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import { Budget, Category, Goal, FamilyMember } from '../types';
 import { formatMoney } from '../utils';
+import { apiFetch } from '../api';
 
 interface Props {
   budgets: Budget[];
@@ -45,7 +46,7 @@ export const BudgetsAndGoals: React.FC<Props> = ({
     e.preventDefault();
     if (!budgetCatId || !budgetLimit) return;
 
-    await fetch('/api/budgets', {
+    await apiFetch('/api/budgets', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -63,7 +64,7 @@ export const BudgetsAndGoals: React.FC<Props> = ({
 
   const handleDeleteBudget = async (id: number) => {
     if (!confirm('Удалить лимит по этой категории?')) return;
-    await fetch(`/api/budgets/${id}`, { method: 'DELETE' });
+    await apiFetch(`/api/budgets/${id}`, { method: 'DELETE' });
     onRefresh();
   };
 
@@ -71,7 +72,7 @@ export const BudgetsAndGoals: React.FC<Props> = ({
     e.preventDefault();
     if (!goalTitle.trim() || !goalTargetAmount) return;
 
-    await fetch('/api/goals', {
+    await apiFetch('/api/goals', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -99,7 +100,7 @@ export const BudgetsAndGoals: React.FC<Props> = ({
 
     const newAmount = goal.current_amount + parseFloat(topUpAmount);
 
-    await fetch(`/api/goals/${topUpGoalId}`, {
+    await apiFetch(`/api/goals/${topUpGoalId}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -114,7 +115,7 @@ export const BudgetsAndGoals: React.FC<Props> = ({
 
   const handleDeleteGoal = async (id: number) => {
     if (!confirm('Удалить финансовую цель?')) return;
-    await fetch(`/api/goals/${id}`, { method: 'DELETE' });
+    await apiFetch(`/api/goals/${id}`, { method: 'DELETE' });
     onRefresh();
   };
 
