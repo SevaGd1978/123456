@@ -1,0 +1,16 @@
+__pycache__/
+*.pyc
+venv/
+*.db
+*.sqlite3
+.pytest_cache/
+node_modules/
+dist/
+.DS_Store
+.gradle/
+build/
+android/app/build/
+android/.gradle/
+android/build/
+android/capacitor-cordova-android-plugins/build/
+
