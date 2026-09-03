@@ -1,5 +1,6 @@
 from sqlalchemy.orm import Session
-from models import FamilyMember, Account, Category, Transaction, Budget, Goal
+from models import FamilyMember, Account, Category, Transaction, Budget, Goal, User
+from auth_utils import hash_password
 
 def apply_transaction_to_balance(db: Session, trans: Transaction, revert: bool = False):
     factor = -1 if revert else 1
@@ -21,6 +22,18 @@ def apply_transaction_to_balance(db: Session, trans: Transaction, revert: bool =
             to_acc.current_balance += factor * trans.amount
 
 def init_default_data(db: Session):
+    # Ensure demo user exists
+    if db.query(User).count() == 0:
+        first_member = db.query(FamilyMember).first()
+        demo_user = User(
+            email="alex@family.ru",
+            hashed_password=hash_password("123456"),
+            full_name="Алексей",
+            family_member_id=first_member.id if first_member else None
+        )
+        db.add(demo_user)
+        db.commit()
+
     # Only seed if no categories exist
     if db.query(Category).count() > 0:
         return
@@ -32,6 +45,16 @@ def init_default_data(db: Session):
         FamilyMember(name="Максим", role="Сын (14 лет)", avatar_color="#10b981"),
     ]
     db.add_all(members)
+    db.commit()
+
+    # Создание демо-пользователей
+    demo_user = User(
+        email="alex@family.ru",
+        hashed_password=hash_password("123456"),
+        full_name="Алексей",
+        family_member_id=members[0].id
+    )
+    db.add(demo_user)
     db.commit()
 
     # 2. Счета

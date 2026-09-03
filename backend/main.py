@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends, HTTPException, Query
+from fastapi import FastAPI, Depends, HTTPException, Query, Header
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
@@ -12,6 +12,7 @@ from database import engine, Base, get_db
 import models
 import schemas
 from crud_helpers import init_default_data, apply_transaction_to_balance
+from auth_utils import hash_password, verify_password, create_access_token, decode_access_token
 
 # Create DB tables
 Base.metadata.create_all(bind=engine)
@@ -33,6 +34,95 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# ----------------- Авторизация / Пользователи (Auth & Users) -----------------
+def get_current_user_optional(authorization: Optional[str] = Header(None), db: Session = Depends(get_db)) -> Optional[models.User]:
+    if not authorization or not authorization.startswith("Bearer "):
+        return None
+    token = authorization.split(" ")[1]
+    payload = decode_access_token(token)
+    if not payload or "sub" not in payload:
+        return None
+    user_id = int(payload["sub"])
+    return db.query(models.User).filter(models.User.id == user_id, models.User.is_active == True).first()
+
+def get_current_user(authorization: Optional[str] = Header(None), db: Session = Depends(get_db)) -> models.User:
+    user = get_current_user_optional(authorization, db)
+    if not user:
+        raise HTTPException(status_code=401, detail="Требуется авторизация")
+    return user
+
+def build_user_response(user: models.User) -> schemas.UserResponse:
+    role = user.family_member.role if user.family_member else "Член семьи"
+    avatar_color = user.family_member.avatar_color if user.family_member else "#3b82f6"
+    return schemas.UserResponse(
+        id=user.id,
+        email=user.email,
+        full_name=user.full_name,
+        family_member_id=user.family_member_id,
+        role=role,
+        avatar_color=avatar_color,
+        is_active=user.is_active,
+        created_at=user.created_at
+    )
+
+@app.post("/api/auth/register", response_model=schemas.TokenResponse)
+def register(user_in: schemas.UserRegister, db: Session = Depends(get_db)):
+    email_clean = user_in.email.strip().lower()
+    existing = db.query(models.User).filter(models.User.email == email_clean).first()
+    if existing:
+        raise HTTPException(status_code=400, detail="Пользователь с таким email уже зарегистрирован")
+
+    # Создаем или находим члена семьи для этого пользователя
+    member = models.FamilyMember(
+        name=user_in.full_name.strip(),
+        role=user_in.role.strip() or "Член семьи",
+        avatar_color=user_in.avatar_color or "#3b82f6"
+    )
+    db.add(member)
+    db.commit()
+    db.refresh(member)
+
+    # Создаем пользователя
+    hashed_pwd = hash_password(user_in.password)
+    db_user = models.User(
+        email=email_clean,
+        hashed_password=hashed_pwd,
+        full_name=user_in.full_name.strip(),
+        family_member_id=member.id,
+        is_active=True
+    )
+    db.add(db_user)
+    db.commit()
+    db.refresh(db_user)
+
+    token = create_access_token(data={"sub": str(db_user.id), "email": db_user.email})
+    return schemas.TokenResponse(
+        access_token=token,
+        token_type="bearer",
+        user=build_user_response(db_user)
+    )
+
+@app.post("/api/auth/login", response_model=schemas.TokenResponse)
+def login(login_in: schemas.UserLogin, db: Session = Depends(get_db)):
+    email_clean = login_in.email.strip().lower()
+    user = db.query(models.User).filter(models.User.email == email_clean).first()
+    if not user or not verify_password(login_in.password, user.hashed_password):
+        raise HTTPException(status_code=400, detail="Неверный email или пароль")
+
+    if not user.is_active:
+        raise HTTPException(status_code=403, detail="Учетная запись отключена")
+
+    token = create_access_token(data={"sub": str(user.id), "email": user.email})
+    return schemas.TokenResponse(
+        access_token=token,
+        token_type="bearer",
+        user=build_user_response(user)
+    )
+
+@app.get("/api/auth/me", response_model=schemas.UserResponse)
+def get_current_user_profile(user: models.User = Depends(get_current_user)):
+    return build_user_response(user)
 
 # ----------------- Члены семьи (Family Members) -----------------
 @app.get("/api/members", response_model=List[schemas.FamilyMemberResponse])
@@ -178,7 +268,11 @@ def get_transactions(
     return [format_transaction_response(t) for t in txs]
 
 @app.post("/api/transactions", response_model=schemas.TransactionResponse)
-def create_transaction(tx_in: schemas.TransactionCreate, db: Session = Depends(get_db)):
+def create_transaction(
+    tx_in: schemas.TransactionCreate, 
+    current_user: Optional[models.User] = Depends(get_current_user_optional),
+    db: Session = Depends(get_db)
+):
     account = db.query(models.Account).filter(models.Account.id == tx_in.account_id).first()
     if not account:
         raise HTTPException(status_code=400, detail="Счет списания не существует")
@@ -192,7 +286,12 @@ def create_transaction(tx_in: schemas.TransactionCreate, db: Session = Depends(g
         if not to_account:
             raise HTTPException(status_code=400, detail="Счет зачисления не существует")
 
-    db_tx = models.Transaction(**tx_in.model_dump())
+    # If member_id was not explicitly specified, auto-associate with current logged in user's family member
+    data = tx_in.model_dump()
+    if not data.get("member_id") and current_user and current_user.family_member_id:
+        data["member_id"] = current_user.family_member_id
+
+    db_tx = models.Transaction(**data)
     db.add(db_tx)
     apply_transaction_to_balance(db, db_tx, revert=False)
     db.commit()

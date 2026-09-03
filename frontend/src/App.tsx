@@ -1,24 +1,31 @@
 import React, { useState, useEffect } from 'react';
 import { 
   LayoutDashboard, ReceiptText, PieChart, Users, 
-  PlusCircle, Moon, Sun, RefreshCw, ChevronDown, Wallet
+  PlusCircle, Moon, Sun, RefreshCw, ChevronDown, Wallet,
+  LogIn, LogOut, User as UserIcon
 } from 'lucide-react';
 import { 
   Account, Category, FamilyMember, Transaction, 
   Budget, Goal, SummaryStats, CategoryExpenseStat, 
-  MemberExpenseStat, MonthlyTrendStat 
+  MemberExpenseStat, MonthlyTrendStat, User 
 } from './types';
 import { DashboardOverview } from './components/DashboardOverview';
 import { TransactionsView } from './components/TransactionsView';
 import { BudgetsAndGoals } from './components/BudgetsAndGoals';
 import { FamilyAndAccounts } from './components/FamilyAndAccounts';
 import { TransactionModal } from './components/TransactionModal';
+import { AuthModal } from './components/AuthModal';
 
 export function App() {
   const [activeTab, setActiveTab] = useState<'dashboard' | 'transactions' | 'budgets' | 'family'>('dashboard');
   const [darkMode, setDarkMode] = useState<boolean>(false);
   const [currentMonth, setCurrentMonth] = useState<string>('2026-09');
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState<boolean>(false);
+
+  // Current User / Auth State
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [token, setToken] = useState<string | null>(null);
 
   // App Data States
   const [members, setMembers] = useState<FamilyMember[]>([]);
@@ -35,6 +42,20 @@ export function App() {
   const [trends, setTrends] = useState<MonthlyTrendStat[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
 
+  // Load saved session
+  useEffect(() => {
+    const savedToken = localStorage.getItem('auth_token');
+    const savedUser = localStorage.getItem('auth_user');
+    if (savedToken && savedUser) {
+      try {
+        setToken(savedToken);
+        setCurrentUser(JSON.parse(savedUser));
+      } catch (e) {
+        console.error('Failed to parse saved user', e);
+      }
+    }
+  }, []);
+
   // Toggle dark mode class on root
   useEffect(() => {
     if (darkMode) {
@@ -44,9 +65,32 @@ export function App() {
     }
   }, [darkMode]);
 
+  const handleLogout = () => {
+    localStorage.removeItem('auth_token');
+    localStorage.removeItem('auth_user');
+    setCurrentUser(null);
+    setToken(null);
+  };
+
+  const handleLoginSuccess = (user: User, authToken: string) => {
+    setCurrentUser(user);
+    setToken(authToken);
+    fetchAllData();
+  };
+
+  const getAuthHeaders = () => {
+    const headers: Record<string, string> = {};
+    const curToken = token || localStorage.getItem('auth_token');
+    if (curToken) {
+      headers['Authorization'] = `Bearer ${curToken}`;
+    }
+    return headers;
+  };
+
   const fetchAllData = async () => {
     try {
       setLoading(true);
+      const headers = getAuthHeaders();
       const [
         membersRes,
         accountsRes,
@@ -59,16 +103,16 @@ export function App() {
         memStatsRes,
         trendsRes
       ] = await Promise.all([
-        fetch('/api/members').then(r => r.json()),
-        fetch('/api/accounts').then(r => r.json()),
-        fetch('/api/categories').then(r => r.json()),
-        fetch(`/api/transactions?month=${currentMonth}`).then(r => r.json()),
-        fetch(`/api/budgets?month=${currentMonth}`).then(r => r.json()),
-        fetch('/api/goals').then(r => r.json()),
-        fetch(`/api/analytics/summary?month=${currentMonth}`).then(r => r.json()),
-        fetch(`/api/analytics/categories?month=${currentMonth}`).then(r => r.json()),
-        fetch(`/api/analytics/members?month=${currentMonth}`).then(r => r.json()),
-        fetch('/api/analytics/monthly-trends?months_count=6').then(r => r.json())
+        fetch('/api/members', { headers }).then(r => r.json()),
+        fetch('/api/accounts', { headers }).then(r => r.json()),
+        fetch('/api/categories', { headers }).then(r => r.json()),
+        fetch(`/api/transactions?month=${currentMonth}`, { headers }).then(r => r.json()),
+        fetch(`/api/budgets?month=${currentMonth}`, { headers }).then(r => r.json()),
+        fetch('/api/goals', { headers }).then(r => r.json()),
+        fetch(`/api/analytics/summary?month=${currentMonth}`, { headers }).then(r => r.json()),
+        fetch(`/api/analytics/categories?month=${currentMonth}`, { headers }).then(r => r.json()),
+        fetch(`/api/analytics/members?month=${currentMonth}`, { headers }).then(r => r.json()),
+        fetch('/api/analytics/monthly-trends?months_count=6', { headers }).then(r => r.json())
       ]);
 
       setMembers(membersRes || []);
@@ -114,22 +158,22 @@ export function App() {
             </div>
           </div>
 
-          {/* Month Picker & Quick Action & Controls */}
-          <div className="flex items-center gap-3">
+          {/* Month Picker & Quick Action & Controls & Auth */}
+          <div className="flex items-center gap-2 sm:gap-3">
             {/* Month select */}
             <div className="relative">
               <input
                 type="month"
                 value={currentMonth}
                 onChange={e => setCurrentMonth(e.target.value)}
-                className="text-xs sm:text-sm font-semibold px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer"
+                className="text-xs sm:text-sm font-semibold px-2.5 sm:px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer"
               />
             </div>
 
             {/* Quick Add Button */}
             <button
               onClick={() => setIsModalOpen(true)}
-              className="flex items-center gap-1.5 px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-semibold shadow-md shadow-indigo-500/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs sm:text-sm font-semibold shadow-md shadow-indigo-500/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
             >
               <PlusCircle className="w-4 h-4" />
               <span className="hidden sm:inline">Операция</span>
@@ -152,10 +196,46 @@ export function App() {
             >
               {darkMode ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-slate-600" />}
             </button>
+
+            {/* User Account / Auth Section */}
+            {currentUser ? (
+              <div className="flex items-center gap-2 pl-2 border-l border-slate-200 dark:border-slate-700">
+                <div 
+                  className="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-xs shadow-sm cursor-pointer"
+                  style={{ backgroundColor: currentUser.avatar_color || '#3b82f6' }}
+                  title={`${currentUser.full_name} (${currentUser.role || 'Член семьи'}) - ${currentUser.email}`}
+                >
+                  {currentUser.full_name.charAt(0).toUpperCase()}
+                </div>
+                <div className="hidden md:block text-left">
+                  <p className="text-xs font-bold text-slate-800 dark:text-white leading-tight">
+                    {currentUser.full_name}
+                  </p>
+                  <p className="text-[10px] text-slate-400 leading-tight">
+                    {currentUser.role || 'Член семьи'}
+                  </p>
+                </div>
+                <button
+                  onClick={handleLogout}
+                  title="Выйти из учетной записи"
+                  className="p-2 rounded-xl text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/30 transition"
+                >
+                  <LogOut className="w-4 h-4" />
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => setIsAuthModalOpen(true)}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-indigo-600 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 text-xs sm:text-sm font-semibold transition"
+              >
+                <LogIn className="w-4 h-4" />
+                <span>Войти</span>
+              </button>
+            )}
           </div>
         </div>
 
-        {/* Tab Navigation Navigation */}
+        {/* Tab Navigation */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex space-x-1 sm:space-x-4 border-t border-slate-100 dark:border-slate-800/60 overflow-x-auto">
           <button
             onClick={() => setActiveTab('dashboard')}
@@ -263,6 +343,13 @@ export function App() {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onSuccess={fetchAllData}
+      />
+
+      {/* Modal for login and registration */}
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+        onLoginSuccess={handleLoginSuccess}
       />
     </div>
   );

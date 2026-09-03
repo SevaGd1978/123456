@@ -1,3 +1,14 @@
+export interface User {
+  id: number;
+  email: string;
+  full_name: string;
+  family_member_id?: number | null;
+  role?: string | null;
+  avatar_color?: string | null;
+  is_active: boolean;
+  created_at: string;
+}
+
 export interface FamilyMember {
   id: number;
   name: string;

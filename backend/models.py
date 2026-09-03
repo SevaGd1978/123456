@@ -1,7 +1,23 @@
 from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey, Boolean, Text
 from sqlalchemy.orm import relationship
-from datetime import datetime
+from datetime import datetime, timezone
 from database import Base
+
+def utcnow():
+    return datetime.now(timezone.utc)
+
+class User(Base):
+    __tablename__ = "users"
+
+    id = Column(Integer, primary_key=True, index=True)
+    email = Column(String(120), unique=True, index=True, nullable=False)
+    hashed_password = Column(String(255), nullable=False)
+    full_name = Column(String(120), nullable=False)
+    family_member_id = Column(Integer, ForeignKey("family_members.id"), nullable=True)
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=utcnow)
+
+    family_member = relationship("FamilyMember", back_populates="user")
 
 class FamilyMember(Base):
     __tablename__ = "family_members"
@@ -10,8 +26,9 @@ class FamilyMember(Base):
     name = Column(String(100), nullable=False)
     role = Column(String(50), nullable=False, default="Член семьи") # Отец, Мать, Сын, Дочь и т.д.
     avatar_color = Column(String(20), default="#3b82f6")
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=utcnow)
 
+    user = relationship("User", back_populates="family_member", uselist=False)
     transactions = relationship("Transaction", back_populates="member", cascade="all, delete-orphan")
     goals = relationship("Goal", back_populates="member")
 
@@ -25,7 +42,7 @@ class Account(Base):
     initial_balance = Column(Float, default=0.0)
     current_balance = Column(Float, default=0.0)
     color = Column(String(20), default="#10b981")
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=utcnow)
 
     transactions_from = relationship("Transaction", foreign_keys="Transaction.account_id", back_populates="account", cascade="all, delete-orphan")
     transactions_to = relationship("Transaction", foreign_keys="Transaction.to_account_id", back_populates="to_account")
@@ -38,7 +55,7 @@ class Category(Base):
     cat_type = Column(String(20), nullable=False) # "income" или "expense"
     icon = Column(String(50), default="tag")
     color = Column(String(20), default="#6b7280")
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=utcnow)
 
     transactions = relationship("Transaction", back_populates="category", cascade="all, delete-orphan")
     budgets = relationship("Budget", back_populates="category", cascade="all, delete-orphan")
@@ -56,7 +73,7 @@ class Transaction(Base):
     member_id = Column(Integer, ForeignKey("family_members.id"), nullable=True)
     description = Column(Text, nullable=True)
     is_planned = Column(Boolean, default=False)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=utcnow)
 
     account = relationship("Account", foreign_keys=[account_id], back_populates="transactions_from")
     to_account = relationship("Account", foreign_keys=[to_account_id], back_populates="transactions_to")
@@ -70,7 +87,7 @@ class Budget(Base):
     category_id = Column(Integer, ForeignKey("categories.id"), nullable=False)
     month = Column(String(7), nullable=False) # YYYY-MM
     limit_amount = Column(Float, nullable=False)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=utcnow)
 
     category = relationship("Category", back_populates="budgets")
 
@@ -85,6 +102,6 @@ class Goal(Base):
     member_id = Column(Integer, ForeignKey("family_members.id"), nullable=True)
     color = Column(String(20), default="#8b5cf6")
     is_completed = Column(Boolean, default=False)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=utcnow)
 
     member = relationship("FamilyMember", back_populates="goals")

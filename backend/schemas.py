@@ -1,6 +1,34 @@
-from pydantic import BaseModel, Field, ConfigDict
+from pydantic import BaseModel, Field, ConfigDict, EmailStr
 from typing import Optional, List
 from datetime import datetime
+
+# --- User & Auth Schemas ---
+class UserRegister(BaseModel):
+    email: str
+    password: str = Field(..., min_length=4)
+    full_name: str
+    role: str = "Член семьи"
+    avatar_color: str = "#3b82f6"
+
+class UserLogin(BaseModel):
+    email: str
+    password: str
+
+class UserResponse(BaseModel):
+    id: int
+    email: str
+    full_name: str
+    family_member_id: Optional[int] = None
+    role: Optional[str] = None
+    avatar_color: Optional[str] = None
+    is_active: bool
+    created_at: datetime
+    model_config = ConfigDict(from_attributes=True)
+
+class TokenResponse(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+    user: UserResponse
 
 # --- FamilyMember Schemas ---
 class FamilyMemberBase(BaseModel):
