@@ -2,7 +2,9 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
 import os
 
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:////workspace/backend/family_budget.db")
+# Default SQLite database path; in Docker / Amvera it defaults to /data/family_budget.db if /data exists
+default_db_path = "/data/family_budget.db" if os.path.isdir("/data") else "/workspace/backend/family_budget.db"
+DATABASE_URL = os.getenv("DATABASE_URL", f"sqlite:///{default_db_path}")
 
 engine = create_engine(
     DATABASE_URL,

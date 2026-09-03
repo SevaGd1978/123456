@@ -1,9 +1,12 @@
 from fastapi import FastAPI, Depends, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 from sqlalchemy import func, extract
 from typing import List, Optional
 from datetime import datetime
+import os
 
 from database import engine, Base, get_db
 import models
@@ -464,3 +467,28 @@ def get_monthly_trends(months_count: int = 6, db: Session = Depends(get_db)):
             savings=inc - exp
         ))
     return res
+
+# ----------------- Раздача статики фронтенда (Production / Amvera) -----------------
+FRONTEND_DIST = os.getenv("FRONTEND_DIST", "/workspace/frontend/dist")
+if os.path.isdir(FRONTEND_DIST):
+    # Mount assets directory if it exists
+    assets_dir = os.path.join(FRONTEND_DIST, "assets")
+    if os.path.isdir(assets_dir):
+        app.mount("/assets", StaticFiles(directory=assets_dir), name="assets")
+
+    @app.get("/{full_path:path}")
+    async def serve_frontend(full_path: str):
+        # Don't catch API endpoints
+        if full_path.startswith("api/") or full_path == "api" or full_path.startswith("docs") or full_path.startswith("openapi.json"):
+            raise HTTPException(status_code=404, detail="Not Found")
+        
+        file_path = os.path.join(FRONTEND_DIST, full_path)
+        if os.path.isfile(file_path):
+            return FileResponse(file_path)
+        
+        # Fallback to index.html for SPA routing
+        index_file = os.path.join(FRONTEND_DIST, "index.html")
+        if os.path.isfile(index_file):
+            return FileResponse(index_file)
+        raise HTTPException(status_code=404, detail="Frontend build index.html not found")
+
