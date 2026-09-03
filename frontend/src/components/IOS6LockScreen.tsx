@@ -121,10 +121,10 @@ export const IOS6LockScreen: React.FC<Props> = ({ onUnlock, savedPin, onSetPin }
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col justify-between ios6-linen text-white select-none overflow-hidden">
+    <div className="fixed inset-0 z-50 flex flex-col justify-between ios6-linen text-white select-none overflow-hidden pt-[max(16px,env(safe-area-inset-top))] pb-[max(20px,env(safe-area-inset-bottom))] px-[max(12px,env(safe-area-inset-left))]">
       
       {/* iOS 6 Top Lock Screen Header */}
-      <div className="pt-6 pb-2 text-center">
+      <div className="pt-2 pb-2 text-center">
         <div className="text-5xl font-light tracking-tight drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
           {currentTime || '12:00'}
         </div>

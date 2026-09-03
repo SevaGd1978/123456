@@ -5,6 +5,10 @@
 /* iOS 6 Authentic Skeuomorphic Design Styles */
 :root {
   --ios-silver: #d1d5db;
+  --sat: env(safe-area-inset-top, 0px);
+  --sab: env(safe-area-inset-bottom, 0px);
+  --sal: env(safe-area-inset-left, 0px);
+  --sar: env(safe-area-inset-right, 0px);
 }
 
 body {
@@ -12,6 +16,20 @@ body {
   font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   user-select: none;
+  padding-top: var(--sat);
+  padding-bottom: var(--sab);
+  padding-left: var(--sal);
+  padding-right: var(--sar);
+  min-height: 100vh;
+  touch-action: manipulation;
+}
+
+/* Samsung S25 Ultra Safe Area helpers */
+.safe-padding-top {
+  padding-top: max(12px, env(safe-area-inset-top));
+}
+.safe-padding-bottom {
+  padding-bottom: max(16px, env(safe-area-inset-bottom));
 }
 
 /* iOS 6 Linen Texture Background */

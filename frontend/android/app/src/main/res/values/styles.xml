@@ -13,6 +13,12 @@
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
         <item name="android:background">@null</item>
+        <!-- Edge-to-Edge & Display Cutout optimization for Samsung Galaxy S25 Ultra (Punch hole AMOLED) -->
+        <item name="android:windowLayoutInDisplayCutoutMode">shortEdges</item>
+        <item name="android:windowTranslucentStatus">false</item>
+        <item name="android:windowTranslucentNavigation">false</item>
+        <item name="android:statusBarColor">#6d83a1</item>
+        <item name="android:navigationBarColor">#111111</item>
     </style>
 
 

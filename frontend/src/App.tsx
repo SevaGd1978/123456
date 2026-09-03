@@ -152,11 +152,11 @@ export function App() {
   }, [currentMonth]);
 
   return (
-    <div className={`min-h-screen transition-colors duration-200 ${appStyle === 'ios6' ? 'ios6-stripes text-slate-900 pb-12' : 'bg-slate-50 dark:bg-slate-900'}`}>
+    <div className={`min-h-screen transition-colors duration-200 ${appStyle === 'ios6' ? 'ios6-stripes text-slate-900 pb-16' : 'bg-slate-50 dark:bg-slate-900 pb-12'} pt-[env(safe-area-inset-top,0px)]`}>
       
       {/* Top Navigation Bar */}
       <header className={`sticky top-0 z-40 ${appStyle === 'ios6' ? 'ios6-navbar text-white' : 'bg-white/80 dark:bg-slate-850/80 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800'}`}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-14 sm:h-16 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 min-h-[56px] py-1.5 flex flex-wrap items-center justify-between gap-2">
           
           {/* Logo & App Name */}
           <div className="flex items-center gap-2.5 sm:gap-3">
