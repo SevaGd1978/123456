@@ -1,8 +1,9 @@
 import { Link } from 'react-router-dom'
 import { useStore } from '../store'
 import { formatMoney, marginKop } from '../lib/money'
-import { formatDate, STATUS_LABEL, todayIso } from '../lib/format'
+import { formatDate, todayIso } from '../lib/format'
 import { Card } from '../components/ui'
+import { calcTripCost } from '../lib/tripCost'
 
 export function DashboardPage() {
   const { orders, parties, vehicles } = useStore()
@@ -12,6 +13,7 @@ export function DashboardPage() {
   const overdue = live.filter((o) => o.paymentDueDate < today && o.status !== 'paid')
   const inTransit = live.filter((o) => o.status === 'in_transit' || o.status === 'loading')
   const margin = live.reduce((s, o) => s + marginKop(o.clientRateKop, o.carrierRateKop, o.extraExpenseKop), 0)
+  const tripCost = live.reduce((s, o) => s + calcTripCost(o).totalKop, 0)
   const revenue = live.reduce((s, o) => s + o.clientRateKop, 0)
   const nameOf = (id: string) => parties.find((p) => p.id === id)?.name ?? '—'
 
@@ -21,7 +23,9 @@ export function DashboardPage() {
     { label: 'В пути', value: String(inTransit.length) },
     { label: 'Просрочена оплата', value: String(overdue.length) },
     { label: 'Выручка (все)', value: formatMoney(revenue) },
-    { label: 'Маржа', value: formatMoney(margin) },
+    { label: 'Себестоимость (ЗП+Платон+топливо)', value: formatMoney(tripCost) },
+    { label: 'Маржа экспедитора', value: formatMoney(margin) },
+    { label: 'Маржа к себестоимости', value: formatMoney(revenue - tripCost) },
   ]
 
   return (
@@ -30,7 +34,7 @@ export function DashboardPage() {
         <div className="text-xs font-semibold uppercase tracking-[0.18em] text-[#6d614c]">Пульт диспетчера</div>
         <h1 className="stamp mt-1 text-3xl">Смена {formatDate(today)}</h1>
       </div>
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         {kpis.map((k) => (
           <Card key={k.label} className="p-4">
             <div className="text-[11px] uppercase tracking-[0.14em] text-[#6d614c]">{k.label}</div>
@@ -48,14 +52,15 @@ export function DashboardPage() {
           </div>
           <ul className="mt-3 divide-y divide-[#eee0c4]">
             {loadingToday.slice(0, 8).map((o) => (
-              <li key={o.id} className="flex items-center justify-between py-2 text-sm">
+              <li key={o.id} className="flex items-center justify-between gap-2 py-2 text-sm">
                 <Link to={`/app/orders/${o.id}`} className="font-semibold hover:underline">
                   {o.number}
                 </Link>
                 <span className="text-[#6d614c]">
                   {o.fromCity} → {o.toCity}
+                  {o.distanceKm ? ` · ${o.distanceKm} км` : ''}
                 </span>
-                <span>{STATUS_LABEL[o.status]}</span>
+                <span className="shrink-0">{formatMoney(calcTripCost(o).totalKop)}</span>
               </li>
             ))}
             {!loadingToday.length && <li className="py-6 text-sm text-[#6d614c]">На сегодня погрузок нет</li>}

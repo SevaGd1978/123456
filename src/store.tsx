@@ -9,8 +9,9 @@ import {
 import { createSeed, passwordFingerprint } from './data/seed'
 import type { AppState, AuditEvent, ExchangeJob, Order, Party } from './types'
 import { nextNumber, todayIso } from './lib/format'
+import { estimateRoadKm } from './lib/tripCost'
 
-const KEY = 'reisoffice:v2'
+const KEY = 'reisoffice:v3'
 
 type Store = AppState & {
   login: (login: string, password: string) => string | null
@@ -21,10 +22,26 @@ type Store = AppState & {
   saveParty: (party: Party) => { ok: true } | { ok: false; error: string }
   log: (action: string, entity: string) => void
   addExchange: (job: Omit<ExchangeJob, 'id' | 'at'>) => void
+  updateSettings: (patch: Partial<AppState['settings']>) => void
   resetDemo: () => void
 }
 
 const Ctx = createContext<Store | null>(null)
+
+function hydrateOrder(order: Order, settings: AppState['settings']): Order {
+  const distanceKm =
+    typeof order.distanceKm === 'number' && order.distanceKm > 0
+      ? order.distanceKm
+      : estimateRoadKm(order.fromCity ?? '', order.toCity ?? '')
+  return {
+    ...order,
+    distanceKm,
+    driverPayPerKmKop: order.driverPayPerKmKop ?? settings.defaultDriverPayPerKmKop,
+    platonPerKmKop: order.platonPerKmKop ?? settings.defaultPlatonPerKmKop,
+    fuelLitersPer100: order.fuelLitersPer100 ?? settings.defaultFuelLitersPer100,
+    fuelPricePerLiterKop: order.fuelPricePerLiterKop ?? settings.defaultFuelPricePerLiterKop,
+  }
+}
 
 function load(): AppState {
   const seed = createSeed()
@@ -32,11 +49,14 @@ function load(): AppState {
     const raw = localStorage.getItem(KEY)
     if (!raw) return seed
     const saved = JSON.parse(raw) as Partial<AppState>
+    const settings = { ...seed.settings, ...saved.settings }
+    const orders = (saved.orders?.length ? saved.orders : seed.orders).map((o) => hydrateOrder(o, settings))
     return {
       ...seed,
       ...saved,
       users: seed.users,
-      orders: saved.orders?.length ? saved.orders : seed.orders,
+      settings,
+      orders,
       parties: saved.parties?.length ? saved.parties : seed.parties,
       vehicles: saved.vehicles?.length ? saved.vehicles : seed.vehicles,
       drivers: saved.drivers?.length ? saved.drivers : seed.drivers,
@@ -159,6 +179,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           ].slice(0, 80),
         }))
       },
+      updateSettings: (patch) => {
+        commit((prev) => ({ ...prev, settings: { ...prev.settings, ...patch } }))
+      },
       resetDemo: () => {
         localStorage.removeItem(KEY)
         setState(createSeed())
@@ -175,7 +198,7 @@ export function useStore() {
   return ctx
 }
 
-export function blankOrder(defaultVat: 0 | 5 | 7 | 10 | 20 | 22, companyClientHint = ''): Order {
+export function blankOrder(settings: AppState['settings'], companyClientHint = ''): Order {
   return {
     id: `ord-new-${Date.now()}`,
     number: '',
@@ -199,10 +222,15 @@ export function blankOrder(defaultVat: 0 | 5 | 7 | 10 | 20 | 22, companyClientHi
     fromAddress: '',
     toCity: '',
     toAddress: '',
+    distanceKm: 0,
+    driverPayPerKmKop: settings.defaultDriverPayPerKmKop,
+    platonPerKmKop: settings.defaultPlatonPerKmKop,
+    fuelLitersPer100: settings.defaultFuelLitersPer100,
+    fuelPricePerLiterKop: settings.defaultFuelPricePerLiterKop,
     clientRateKop: 0,
     carrierRateKop: 0,
     extraExpenseKop: 0,
-    vatRate: defaultVat,
+    vatRate: settings.defaultVat,
     source: 'вручную',
     notes: '',
   }

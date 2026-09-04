@@ -3,9 +3,9 @@ import { Link } from 'react-router-dom'
 import { useStore } from '../store'
 import { VirtualTable } from '../components/VirtualTable'
 import { Btn, Input, Select, StatusPill } from '../components/ui'
-import { formatMoney, marginKop } from '../lib/money'
+import { formatMoney } from '../lib/money'
 import { formatDate, STATUS_LABEL } from '../lib/format'
-import { formatWeight } from '../lib/weight'
+import { calcTripCost } from '../lib/tripCost'
 
 export function OrdersPage() {
   const { orders, parties } = useStore()
@@ -70,9 +70,9 @@ export function OrdersPage() {
           <div className="grid grid-cols-12 gap-2">
             <div className="col-span-2">Заявка</div>
             <div className="col-span-2">Клиент</div>
-            <div className="col-span-3">Маршрут / груз</div>
-            <div className="col-span-2">Вес</div>
-            <div className="col-span-1">Маржа</div>
+            <div className="col-span-3">Маршрут</div>
+            <div className="col-span-1">Км</div>
+            <div className="col-span-2">Себестоимость</div>
             <div className="col-span-2">Статус</div>
           </div>
         }
@@ -80,7 +80,7 @@ export function OrdersPage() {
           const o = filtered[i]
           if (!o) return null
           const client = partyById.get(o.clientId)
-          const m = marginKop(o.clientRateKop, o.carrierRateKop, o.extraExpenseKop)
+          const cost = calcTripCost(o)
           return (
             <Link
               key={o.id}
@@ -101,8 +101,11 @@ export function OrdersPage() {
                 </div>
                 <div className="truncate text-xs text-[#6d614c]">{o.cargo}</div>
               </div>
-              <div className="col-span-2">{formatWeight(o.weightValue, o.weightUnit)}</div>
-              <div className={`col-span-1 ${m < 0 ? 'text-[#a33b24]' : ''}`}>{formatMoney(m)}</div>
+              <div className="col-span-1">{o.distanceKm ? `${o.distanceKm}` : '—'}</div>
+              <div className="col-span-2">
+                <div>{formatMoney(cost.totalKop)}</div>
+                <div className="text-[11px] text-[#6d614c]">ЗП + Платон + топливо</div>
+              </div>
               <div className="col-span-2">
                 <StatusPill status={o.status} label={STATUS_LABEL[o.status]} />
               </div>

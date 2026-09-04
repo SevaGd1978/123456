@@ -2,10 +2,12 @@ import { useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { blankOrder, useStore } from '../store'
 import { Btn, Card, Field, Input, Select, Textarea } from '../components/ui'
+import { TripCostCard } from '../components/TripCostCard'
 import { STATUS_LABEL, addDays } from '../lib/format'
 import { VAT_RATES, formatMoney, marginKop, parseRubInput } from '../lib/money'
 import { epdReadiness, orderSaveIssues } from '../lib/validation'
 import { formatWeight } from '../lib/weight'
+import { calcTripCost, estimateRoadKm } from '../lib/tripCost'
 import type { Order, Party, WeightUnit } from '../types'
 
 function rubField(kop: number, onKop: (n: number) => void) {
@@ -22,14 +24,14 @@ export function OrderEditPage() {
   const nav = useNavigate()
   const store = useStore()
   const existing = store.orders.find((o) => o.id === id)
-  const [order, setOrder] = useState<Order>(() => existing ?? blankOrder(store.settings.defaultVat))
+  const [order, setOrder] = useState<Order>(() => existing ?? blankOrder(store.settings))
   const [msg, setMsg] = useState('')
   const [innQuery, setInnQuery] = useState('')
   const [loadedId, setLoadedId] = useState(id)
 
   if (id !== loadedId) {
     setLoadedId(id)
-    setOrder(existing ?? blankOrder(store.settings.defaultVat))
+    setOrder(existing ?? blankOrder(store.settings))
     setMsg('')
   }
 
@@ -50,6 +52,8 @@ export function OrderEditPage() {
 
   const issues = epdReadiness(order, store.parties, store.vehicles, store.drivers)
   const margin = marginKop(order.clientRateKop, order.carrierRateKop, order.extraExpenseKop)
+  const trip = calcTripCost(order)
+  const tripMargin = order.clientRateKop - trip.totalKop - order.extraExpenseKop
   const partyLabel = (p: Party) => `${p.name} · ${p.inn}`
 
   return (
@@ -231,10 +235,24 @@ export function OrderEditPage() {
               />
             </Field>
             <Field label="Откуда">
-              <Input value={order.fromCity} onChange={(e) => set('fromCity', e.target.value)} />
+              <Input
+                value={order.fromCity}
+                onChange={(e) => {
+                  const fromCity = e.target.value
+                  const km = estimateRoadKm(fromCity, order.toCity)
+                  setOrder((o) => ({ ...o, fromCity, distanceKm: o.distanceKm ? o.distanceKm : km }))
+                }}
+              />
             </Field>
             <Field label="Куда">
-              <Input value={order.toCity} onChange={(e) => set('toCity', e.target.value)} />
+              <Input
+                value={order.toCity}
+                onChange={(e) => {
+                  const toCity = e.target.value
+                  const km = estimateRoadKm(order.fromCity, toCity)
+                  setOrder((o) => ({ ...o, toCity, distanceKm: o.distanceKm ? o.distanceKm : km }))
+                }}
+              />
             </Field>
             <Field label="Адрес погрузки">
               <Input value={order.fromAddress} onChange={(e) => set('fromAddress', e.target.value)} />
@@ -264,6 +282,8 @@ export function OrderEditPage() {
             </Field>
           </Card>
 
+          <TripCostCard order={order} onChange={set} />
+
           <Card className="grid gap-4 p-5 md:grid-cols-4">
             <Field label="Ставка клиенту, ₽">{rubField(order.clientRateKop, (n) => set('clientRateKop', n))}</Field>
             <Field label="Ставка перевозчику, ₽">{rubField(order.carrierRateKop, (n) => set('carrierRateKop', n))}</Field>
@@ -287,8 +307,12 @@ export function OrderEditPage() {
 
         <div className="space-y-4">
           <Card className="p-5">
-            <div className="text-[11px] uppercase tracking-[0.14em] text-[#6d614c]">Маржа</div>
+            <div className="text-[11px] uppercase tracking-[0.14em] text-[#6d614c]">Маржа экспедитора</div>
             <div className={`mt-1 font-serif text-3xl ${margin < 0 ? 'text-[#a33b24]' : ''}`}>{formatMoney(margin)}</div>
+            <div className="mt-1 text-xs text-[#6d614c]">клиент − перевозчик − доп.</div>
+            <div className="mt-4 text-[11px] uppercase tracking-[0.14em] text-[#6d614c]">Маржа к себестоимости</div>
+            <div className={`font-serif text-2xl ${tripMargin < 0 ? 'text-[#a33b24]' : ''}`}>{formatMoney(tripMargin)}</div>
+            <div className="text-xs text-[#6d614c]">клиент − ЗП − Платон − топливо − доп.</div>
             <button
               type="button"
               className="mt-3 text-xs text-[#8a5a12] underline"

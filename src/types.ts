@@ -92,6 +92,11 @@ export type Order = {
   fromAddress: string
   toCity: string
   toAddress: string
+  distanceKm: number
+  driverPayPerKmKop: number
+  platonPerKmKop: number
+  fuelLitersPer100: number
+  fuelPricePerLiterKop: number
   clientRateKop: number
   carrierRateKop: number
   extraExpenseKop: number
@@ -132,5 +137,9 @@ export type AppState = {
     companyId: string
     exchangePrefix: string
     defaultVat: VatRate
+    defaultDriverPayPerKmKop: number
+    defaultPlatonPerKmKop: number
+    defaultFuelLitersPer100: number
+    defaultFuelPricePerLiterKop: number
   }
 }

@@ -1,6 +1,7 @@
 import type { AppState, Driver, Order, Party, Vehicle } from '../types'
 import { rubToKop } from '../lib/money'
 import { addDays, todayIso } from '../lib/format'
+import { TRIP_COST_DEFAULTS, estimateRoadKm } from '../lib/tripCost'
 
 function fnv(s: string): string {
   let h = 2166136261
@@ -299,6 +300,11 @@ export function createSeed(): AppState {
       vatRate: rand() > 0.12 ? 22 : 0,
       source: pick(['телефон', 'ATI', 'email', 'повтор']),
       notes: i % 17 === 0 ? 'Хрупкий груз, нужна гидроборт' : '',
+      distanceKm: estimateRoadKm(from, to) || 250 + Math.floor(rand() * 1400),
+      driverPayPerKmKop: TRIP_COST_DEFAULTS.driverPayPerKmKop,
+      platonPerKmKop: TRIP_COST_DEFAULTS.platonPerKmKop,
+      fuelLitersPer100: TRIP_COST_DEFAULTS.fuelLitersPer100,
+      fuelPricePerLiterKop: TRIP_COST_DEFAULTS.fuelPricePerLiterKop,
     })
   }
 
@@ -345,6 +351,10 @@ export function createSeed(): AppState {
       companyId: company.id,
       exchangePrefix: 'ReisOffice',
       defaultVat: 22,
+      defaultDriverPayPerKmKop: TRIP_COST_DEFAULTS.driverPayPerKmKop,
+      defaultPlatonPerKmKop: TRIP_COST_DEFAULTS.platonPerKmKop,
+      defaultFuelLitersPer100: TRIP_COST_DEFAULTS.fuelLitersPer100,
+      defaultFuelPricePerLiterKop: TRIP_COST_DEFAULTS.fuelPricePerLiterKop,
     },
   }
 }

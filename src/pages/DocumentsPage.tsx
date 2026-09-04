@@ -4,6 +4,7 @@ import { Btn, Card } from '../components/ui'
 import { formatDate } from '../lib/format'
 import { formatMoney, grossAmount, vatAmount } from '../lib/money'
 import { formatWeight } from '../lib/weight'
+import { calcTripCost } from '../lib/tripCost'
 
 export function DocumentsPage() {
   const { orders, parties, settings } = useStore()
@@ -28,6 +29,7 @@ export function DocumentsPage() {
 
   const vat = vatAmount(order.clientRateKop, order.vatRate)
   const gross = grossAmount(order.clientRateKop, order.vatRate)
+  const trip = calcTripCost(order)
 
   return (
     <div className="space-y-4 p-6">
@@ -100,6 +102,12 @@ export function DocumentsPage() {
           </tbody>
         </table>
         <div className="mt-6 font-serif text-2xl">К оплате: {formatMoney(gross)}</div>
+        {order.distanceKm > 0 && (
+          <div className="no-print mt-4 rounded-xl bg-[#f4ead6] p-3 text-sm text-[#4a4336]">
+            Себестоимость {order.distanceKm} км: ЗП {formatMoney(trip.salaryKop)}, Платон {formatMoney(trip.platonKop)},
+            топливо {formatMoney(trip.fuelKop)} → {formatMoney(trip.totalKop)}
+          </div>
+        )}
       </Card>
     </div>
   )

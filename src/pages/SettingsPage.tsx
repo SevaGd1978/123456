@@ -1,9 +1,10 @@
 import { useStore } from '../store'
-import { Btn, Card } from '../components/ui'
+import { Btn, Card, Field, Input } from '../components/ui'
 import { ROLE_LABEL, formatDate } from '../lib/format'
+import { kopToRub } from '../lib/money'
 
 export function SettingsPage() {
-  const { users, settings, parties, audit, resetDemo } = useStore()
+  const { users, settings, parties, audit, resetDemo, updateSettings } = useStore()
   const company = parties.find((p) => p.id === settings.companyId)
 
   return (
@@ -38,6 +39,50 @@ export function SettingsPage() {
             Строки Connection= / Password= в ini больше не используются. Если такие файлы ещё лежат на рабочих
             компьютерах — смените пароль базы и FTP на хостинге: они уже попадали в открытые документы.
           </p>
+        </Card>
+        <Card className="space-y-3 p-5">
+          <div className="font-serif text-xl">Ставки себестоимости по умолчанию</div>
+          <p className="text-xs text-[#6d614c]">Подставляются в новый рейс. В карточке перевозки их можно переопределить.</p>
+          <Field label="ЗП водителя, ₽/км">
+            <Input
+              type="number"
+              step="0.01"
+              value={kopToRub(settings.defaultDriverPayPerKmKop)}
+              onChange={(e) =>
+                updateSettings({ defaultDriverPayPerKmKop: Math.round(Number(e.target.value.replace(',', '.')) * 100) || 0 })
+              }
+            />
+          </Field>
+          <Field label="Платон, ₽/км">
+            <Input
+              type="number"
+              step="0.01"
+              value={kopToRub(settings.defaultPlatonPerKmKop)}
+              onChange={(e) =>
+                updateSettings({ defaultPlatonPerKmKop: Math.round(Number(e.target.value.replace(',', '.')) * 100) || 0 })
+              }
+            />
+          </Field>
+          <Field label="Расход топлива, л/100 км">
+            <Input
+              type="number"
+              step="0.1"
+              value={settings.defaultFuelLitersPer100}
+              onChange={(e) => updateSettings({ defaultFuelLitersPer100: Number(e.target.value) || 0 })}
+            />
+          </Field>
+          <Field label="Цена дизеля, ₽/л">
+            <Input
+              type="number"
+              step="0.01"
+              value={kopToRub(settings.defaultFuelPricePerLiterKop)}
+              onChange={(e) =>
+                updateSettings({
+                  defaultFuelPricePerLiterKop: Math.round(Number(e.target.value.replace(',', '.')) * 100) || 0,
+                })
+              }
+            />
+          </Field>
         </Card>
         <Card className="p-5">
           <div className="font-serif text-xl">Пользователи</div>
