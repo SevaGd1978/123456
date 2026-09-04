@@ -129,9 +129,11 @@ export function TripCostCard({
             {busy ? 'Считаем маршрут…' : 'По карте (OSM / OSRM)'}
           </button>
           {hint && <p className="mt-1 text-xs leading-relaxed text-[#4a4336]">{hint}</p>}
-          {last?.fromLabel && last.toLabel && (
-            <p className="mt-1 text-[11px] leading-relaxed text-[#6d614c]">
-              {last.fromLabel} → {last.toLabel}
+          {(order.fromCity.trim() || order.toCity.trim()) && (
+            <p className="mt-1 text-[11px] leading-relaxed text-[#6d614c]" title={[last?.fromLabel, last?.toLabel].filter(Boolean).join(' → ')}>
+              {order.fromCity}
+              {order.fromAddress.trim() ? `, ${order.fromAddress.trim()}` : ''} → {order.toCity}
+              {order.toAddress.trim() ? `, ${order.toAddress.trim()}` : ''}
             </p>
           )}
         </Field>

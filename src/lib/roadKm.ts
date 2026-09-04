@@ -43,7 +43,7 @@ async function nominatimPause() {
 
 async function geocodePhoton(q: string): Promise<LonLat | null> {
   const url = `${PHOTON}/?q=${encodeURIComponent(q)}&limit=1`
-  const res = await fetch(url)
+  const res = await fetch(url, { headers: { Accept: 'application/json', 'Accept-Language': 'ru' } })
   if (!res.ok) return null
   const data = (await res.json()) as {
     features?: Array<{
