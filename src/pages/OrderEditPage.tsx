@@ -7,7 +7,7 @@ import { STATUS_LABEL, addDays } from '../lib/format'
 import { VAT_RATES, formatMoney, marginKop, parseRubInput } from '../lib/money'
 import { epdReadiness, orderSaveIssues } from '../lib/validation'
 import { formatWeight } from '../lib/weight'
-import { calcTripCost, estimateRoadKm } from '../lib/tripCost'
+import { calcTripCost } from '../lib/tripCost'
 import { applyDraft, blankParty } from '../lib/innLookup'
 import { isValidInn } from '../lib/inn'
 import { InnFillButton } from '../components/InnFillButton'
@@ -258,24 +258,10 @@ export function OrderEditPage() {
               />
             </Field>
             <Field label="Откуда">
-              <Input
-                value={order.fromCity}
-                onChange={(e) => {
-                  const fromCity = e.target.value
-                  const km = estimateRoadKm(fromCity, order.toCity)
-                  setOrder((o) => ({ ...o, fromCity, distanceKm: o.distanceKm ? o.distanceKm : km }))
-                }}
-              />
+              <Input value={order.fromCity} onChange={(e) => set('fromCity', e.target.value)} placeholder="город погрузки" />
             </Field>
             <Field label="Куда">
-              <Input
-                value={order.toCity}
-                onChange={(e) => {
-                  const toCity = e.target.value
-                  const km = estimateRoadKm(order.fromCity, toCity)
-                  setOrder((o) => ({ ...o, toCity, distanceKm: o.distanceKm ? o.distanceKm : km }))
-                }}
-              />
+              <Input value={order.toCity} onChange={(e) => set('toCity', e.target.value)} placeholder="город выгрузки" />
             </Field>
             <Field label="Адрес погрузки">
               <Input value={order.fromAddress} onChange={(e) => set('fromAddress', e.target.value)} />

@@ -1,4 +1,6 @@
-import { calcTripCost, estimateRoadKm, formatLiters } from '../lib/tripCost'
+import { useEffect, useRef, useState } from 'react'
+import { calcTripCost, formatLiters } from '../lib/tripCost'
+import { lookupDrivingKm, type DrivingKmResult } from '../lib/roadKm'
 import { formatMoney, kopToRub } from '../lib/money'
 import { Card, Field, Input } from './ui'
 import type { Order } from '../types'
@@ -6,6 +8,29 @@ import type { Order } from '../types'
 function kopRateValue(kop: number): string {
   const rub = kopToRub(kop)
   return Number.isInteger(rub) ? String(rub) : String(rub)
+}
+
+function routeKey(order: Pick<Order, 'fromCity' | 'toCity' | 'fromAddress' | 'toAddress'>): string {
+  return [order.fromCity, order.fromAddress, order.toCity, order.toAddress]
+    .map((s) => s.trim().toLowerCase())
+    .join('|')
+}
+
+function formatDuration(min?: number): string {
+  if (!min || min < 1) return ''
+  const h = Math.floor(min / 60)
+  const m = min % 60
+  if (h && m) return `${h} ч ${m} мин`
+  if (h) return `${h} ч`
+  return `${m} мин`
+}
+
+function sourceLabel(r: DrivingKmResult): string {
+  if (r.source === 'osrm' || r.source === 'cache') {
+    const drive = formatDuration(r.durationMin)
+    return drive ? `OSM / OSRM · ${r.km} км · ${drive}` : `OSM / OSRM · ${r.km} км`
+  }
+  return `По прямой × 1,25 · ${r.km} км`
 }
 
 export function TripCostCard({
@@ -17,14 +42,65 @@ export function TripCostCard({
 }) {
   const cost = calcTripCost(order)
   const ownMargin = order.clientRateKop - cost.totalKop - order.extraExpenseKop
-  const suggested = estimateRoadKm(order.fromCity, order.toCity)
+  const key = routeKey(order)
+  const [busy, setBusy] = useState(false)
+  const [hint, setHint] = useState('')
+  const [last, setLast] = useState<DrivingKmResult | null>(null)
+  const kmLockedFor = useRef<string | null>(null)
+  const openedOn = useRef(key)
+  const openedKm = useRef(order.distanceKm)
+  const onChangeRef = useRef(onChange)
+  const requestGen = useRef(0)
+  onChangeRef.current = onChange
+
+  async function applyRouteKm(force: boolean) {
+    if (!order.fromCity.trim() || !order.toCity.trim()) {
+      setHint('Укажите города погрузки и выгрузки — подставим км по дороге')
+      return
+    }
+    const mine = ++requestGen.current
+    setBusy(true)
+    setHint('Считаем километраж по дороге…')
+    try {
+      const result = await lookupDrivingKm(order.fromCity, order.toCity, order.fromAddress, order.toAddress)
+      if (mine !== requestGen.current) return
+      setLast(result)
+      const sameOpen = key === openedOn.current && openedKm.current > 0
+      const locked = kmLockedFor.current === key
+      if (force || (!locked && !sameOpen)) {
+        onChangeRef.current('distanceKm', result.km)
+        openedKm.current = result.km
+        openedOn.current = key
+      }
+      setHint(
+        force || (!locked && !sameOpen)
+          ? `${sourceLabel(result)}${result.error ? ` · ${result.error}` : ''}`
+          : `${sourceLabel(result)} — в поле км оставлено ваше значение, нажмите «По карте», чтобы заменить`,
+      )
+    } catch {
+      if (mine !== requestGen.current) return
+      setHint('Карта недоступна. Можно ввести км вручную.')
+    } finally {
+      if (mine === requestGen.current) setBusy(false)
+    }
+  }
+
+  useEffect(() => {
+    if (!order.fromCity.trim() || !order.toCity.trim()) return
+    const t = window.setTimeout(() => {
+      void applyRouteKm(false)
+    }, 700)
+    return () => window.clearTimeout(t)
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- debounce on route points only
+  }, [key])
 
   return (
     <Card className="space-y-4 p-5">
       <div>
         <div className="font-serif text-xl">Себестоимость рейса</div>
         <p className="mt-1 text-xs text-[#6d614c]">
-          ЗП водителя × км + «Платон» × км + расход 35 л / 100 км × цена литра. Расход можно изменить.
+          Километраж подставляется с открытой карты OSM (Photon / Nominatim) и маршрута OSRM по пунктам погрузки и
+          выгрузки. Формула: ЗП × км + «Платон» × км + расход 35 л / 100 км × цена литра.
         </p>
       </div>
       <div className="grid gap-4 md:grid-cols-5">
@@ -35,17 +111,28 @@ export function TripCostCard({
               min={0}
               step="1"
               value={order.distanceKm || ''}
-              onChange={(e) => onChange('distanceKm', Number(e.target.value) || 0)}
+              onChange={(e) => {
+                kmLockedFor.current = key
+                onChange('distanceKm', Number(e.target.value) || 0)
+              }}
             />
           </div>
-          {suggested > 0 && suggested !== order.distanceKm && (
-            <button
-              type="button"
-              className="mt-1 text-xs text-[#8a5a12] underline"
-              onClick={() => onChange('distanceKm', suggested)}
-            >
-              По городам ≈ {suggested} км
-            </button>
+          <button
+            type="button"
+            className="mt-1 text-xs text-[#8a5a12] underline disabled:opacity-50"
+            disabled={busy || !order.fromCity.trim() || !order.toCity.trim()}
+            onClick={() => {
+              kmLockedFor.current = null
+              void applyRouteKm(true)
+            }}
+          >
+            {busy ? 'Считаем маршрут…' : 'По карте (OSM / OSRM)'}
+          </button>
+          {hint && <p className="mt-1 text-xs leading-relaxed text-[#4a4336]">{hint}</p>}
+          {last?.fromLabel && last.toLabel && (
+            <p className="mt-1 text-[11px] leading-relaxed text-[#6d614c]">
+              {last.fromLabel} → {last.toLabel}
+            </p>
           )}
         </Field>
         <Field label="ЗП водителя, ₽/км">

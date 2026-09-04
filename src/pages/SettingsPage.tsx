@@ -74,7 +74,10 @@ export function SettingsPage() {
         </Card>
         <Card className="space-y-3 p-5">
           <div className="font-serif text-xl">Ставки себестоимости по умолчанию</div>
-          <p className="text-xs text-[#6d614c]">Подставляются в новый рейс. В карточке перевозки их можно переопределить.</p>
+          <p className="text-xs text-[#6d614c]">
+            Подставляются в новый рейс. Километраж считается бесплатно по пунктам погрузки и выгрузки: геокодер OSM
+            (Photon / Nominatim) и автомобильный маршрут OSRM. Если карта недоступна — запасной расчёт по прямой × 1,25.
+          </p>
           <Field label="ЗП водителя, ₽/км">
             <Input
               type="number"
