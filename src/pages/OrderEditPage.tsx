@@ -8,6 +8,9 @@ import { VAT_RATES, formatMoney, marginKop, parseRubInput } from '../lib/money'
 import { epdReadiness, orderSaveIssues } from '../lib/validation'
 import { formatWeight } from '../lib/weight'
 import { calcTripCost, estimateRoadKm } from '../lib/tripCost'
+import { applyDraft, blankParty } from '../lib/innLookup'
+import { isValidInn } from '../lib/inn'
+import { InnFillButton } from '../components/InnFillButton'
 import type { Order, Party, WeightUnit } from '../types'
 
 function rubField(kop: number, onKop: (n: number) => void) {
@@ -148,6 +151,26 @@ export function OrderEditPage() {
                   </li>
                 ))}
               </ul>
+            )}
+            {isValidInn(innQuery) && innHits.length === 0 && (
+              <div className="rounded-xl border border-dashed border-[#d7c7a2] p-3">
+                <p className="mb-2 text-xs text-[#6d614c]">
+                  В справочнике этого ИНН нет — подставим название и реквизиты из открытого ЕГРЮЛ и создадим клиента.
+                </p>
+                <InnFillButton
+                  inn={innQuery}
+                  dadataToken={store.settings.dadataToken}
+                  onFilled={(draft) => {
+                    const party = applyDraft(blankParty('client'), draft)
+                    const res = store.saveParty(party)
+                    if (res.ok) {
+                      set('clientId', party.id)
+                      store.log(`Карточка по ИНН ${party.inn}: ${party.name}`, 'party')
+                      setInnQuery('')
+                    }
+                  }}
+                />
+              </div>
             )}
             <div className="grid gap-4 md:grid-cols-2">
               <Field label="Клиент">

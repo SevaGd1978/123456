@@ -1,19 +1,21 @@
 import { useStore } from '../store'
 import { Btn, Card, Field, Input } from '../components/ui'
+import { InnFillButton } from '../components/InnFillButton'
 import { ROLE_LABEL, formatDate } from '../lib/format'
 import { kopToRub } from '../lib/money'
+import { applyDraft } from '../lib/innLookup'
 
 export function SettingsPage() {
-  const { users, settings, parties, audit, resetDemo, updateSettings } = useStore()
+  const { users, settings, parties, audit, resetDemo, updateSettings, saveParty, log } = useStore()
   const company = parties.find((p) => p.id === settings.companyId)
 
   return (
     <div className="space-y-4 p-6">
       <h1 className="stamp text-3xl">Настройки</h1>
       <div className="grid gap-4 lg:grid-cols-2">
-        <Card className="p-5">
+        <Card className="space-y-3 p-5">
           <div className="font-serif text-xl">Фирма</div>
-          <dl className="mt-3 space-y-2 text-sm">
+          <dl className="space-y-2 text-sm">
             <div>
               <dt className="text-[#6d614c]">Наименование</dt>
               <dd className="font-semibold">{company?.name}</dd>
@@ -23,6 +25,10 @@ export function SettingsPage() {
               <dd className="font-mono">
                 {company?.inn} / {company?.kpp}
               </dd>
+            </div>
+            <div>
+              <dt className="text-[#6d614c]">Адрес</dt>
+              <dd>{company?.address || '—'}</dd>
             </div>
             <div>
               <dt className="text-[#6d614c]">Ид. ЭДО / ЭПД</dt>
@@ -35,6 +41,32 @@ export function SettingsPage() {
               <dd>{settings.defaultVat}%</dd>
             </div>
           </dl>
+          {company && (
+            <InnFillButton
+              inn={company.inn}
+              dadataToken={settings.dadataToken}
+              onFilled={(draft) => {
+                saveParty(applyDraft(company, draft))
+                log(`Реквизиты фирмы по ИНН ${draft.inn}`, 'party')
+              }}
+            />
+          )}
+          <Field label="Токен Дадаты (необязательно, бесплатно 10 000 запросов/сутки)">
+            <Input
+              type="password"
+              autoComplete="off"
+              value={settings.dadataToken ?? ''}
+              placeholder="если ЕГРЮЛ.org не отдал выписку"
+              onChange={(e) => updateSettings({ dadataToken: e.target.value.trim() })}
+            />
+          </Field>
+          <p className="text-xs text-[#6d614c]">
+            Ключ берут на{' '}
+            <a className="underline" href="https://dadata.ru/api/find-party/" target="_blank" rel="noreferrer">
+              dadata.ru
+            </a>
+            . Без него работает открытая выписка ЕГРЮЛ.org — для части ИНН.
+          </p>
           <p className="mt-4 rounded-xl bg-[#f4ead6] p-3 text-xs leading-relaxed text-[#4a4336]">
             Строки Connection= / Password= в ini больше не используются. Если такие файлы ещё лежат на рабочих
             компьютерах — смените пароль базы и FTP на хостинге: они уже попадали в открытые документы.

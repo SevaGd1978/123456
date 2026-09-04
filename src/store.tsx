@@ -49,7 +49,7 @@ function load(): AppState {
     const raw = localStorage.getItem(KEY)
     if (!raw) return seed
     const saved = JSON.parse(raw) as Partial<AppState>
-    const settings = { ...seed.settings, ...saved.settings }
+    const settings = { ...seed.settings, ...saved.settings, dadataToken: saved.settings?.dadataToken ?? seed.settings.dadataToken }
     const orders = (saved.orders?.length ? saved.orders : seed.orders).map((o) => hydrateOrder(o, settings))
     return {
       ...seed,

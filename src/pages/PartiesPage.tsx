@@ -1,7 +1,9 @@
 import { useMemo, useState } from 'react'
 import { useStore } from '../store'
 import { Btn, Card, Field, Input, Select } from '../components/ui'
+import { InnFillButton } from '../components/InnFillButton'
 import { isValidInn } from '../lib/inn'
+import { applyDraft, blankParty } from '../lib/innLookup'
 import type { Party, PartyKind } from '../types'
 
 const KINDS: { id: PartyKind | 'all'; label: string }[] = [
@@ -13,27 +15,8 @@ const KINDS: { id: PartyKind | 'all'; label: string }[] = [
   { id: 'own', label: 'Наша фирма' },
 ]
 
-const empty = (): Party => ({
-  id: `p-${Date.now()}`,
-  kind: 'client',
-  name: '',
-  inn: '',
-  kpp: '',
-  legalForm: 'ooo',
-  phone: '',
-  email: '',
-  city: '',
-  address: '',
-  contact: '',
-  bankBik: '',
-  bankAccount: '',
-  edoId: '',
-  epdId: '',
-  notes: '',
-})
-
 export function PartiesPage() {
-  const { parties, saveParty, log } = useStore()
+  const { parties, saveParty, log, settings } = useStore()
   const [kind, setKind] = useState<PartyKind | 'all'>('client')
   const [q, setQ] = useState('')
   const [edit, setEdit] = useState<Party | null>(null)
@@ -55,7 +38,7 @@ export function PartiesPage() {
           <div className="text-xs font-semibold uppercase tracking-[0.18em] text-[#6d614c]">Справочники</div>
           <h1 className="stamp text-3xl">Контрагенты</h1>
         </div>
-        <Btn onClick={() => setEdit(empty())}>Новая карточка</Btn>
+        <Btn onClick={() => setEdit(blankParty('client'))}>Новая карточка</Btn>
       </div>
       <div className="flex flex-wrap gap-2">
         {KINDS.map((k) => (
@@ -122,11 +105,32 @@ export function PartiesPage() {
                 {edit.inn ? (isValidInn(edit.inn) ? 'ИНН корректный' : 'ИНН с ошибкой в контрольной сумме') : 'укажите ИНН'}
               </div>
             </Field>
+            <InnFillButton
+              inn={edit.inn}
+              dadataToken={settings.dadataToken}
+              onFilled={(draft) => setEdit((p) => (p ? applyDraft(p, draft) : p))}
+            />
             <Field label="КПП">
               <Input value={edit.kpp} onChange={(e) => setEdit({ ...edit, kpp: e.target.value })} />
             </Field>
+            <Field label="Форма">
+              <Select
+                value={edit.legalForm}
+                onChange={(e) => setEdit({ ...edit, legalForm: e.target.value as Party['legalForm'] })}
+              >
+                <option value="ooo">ООО</option>
+                <option value="ao">АО / ПАО</option>
+                <option value="ip">ИП</option>
+              </Select>
+            </Field>
             <Field label="Город">
               <Input value={edit.city} onChange={(e) => setEdit({ ...edit, city: e.target.value })} />
+            </Field>
+            <Field label="Адрес">
+              <Input value={edit.address} onChange={(e) => setEdit({ ...edit, address: e.target.value })} />
+            </Field>
+            <Field label="Руководитель / контакт">
+              <Input value={edit.contact} onChange={(e) => setEdit({ ...edit, contact: e.target.value })} />
             </Field>
             <Field label="Телефон">
               <Input value={edit.phone} onChange={(e) => setEdit({ ...edit, phone: e.target.value })} />

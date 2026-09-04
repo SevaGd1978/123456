@@ -355,6 +355,7 @@ export function createSeed(): AppState {
       defaultPlatonPerKmKop: TRIP_COST_DEFAULTS.platonPerKmKop,
       defaultFuelLitersPer100: TRIP_COST_DEFAULTS.fuelLitersPer100,
       defaultFuelPricePerLiterKop: TRIP_COST_DEFAULTS.fuelPricePerLiterKop,
+      dadataToken: '',
     },
   }
 }

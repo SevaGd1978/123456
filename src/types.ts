@@ -141,5 +141,6 @@ export type AppState = {
     defaultPlatonPerKmKop: number
     defaultFuelLitersPer100: number
     defaultFuelPricePerLiterKop: number
+    dadataToken: string
   }
 }
