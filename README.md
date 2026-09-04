@@ -44,6 +44,24 @@ npm run dev
 
 Сборка: `npm run build` и `npm run preview`.
 
+## Развёртывание на Amvera
+
+В корне лежит `amvera.yml`: сборка Vite (`npm run build`) и выкладка `dist/` в nginx со поддержкой SPA-маршрутов. Запасной путь — `Dockerfile`.
+
+1. Создайте приложение на [cloud.amvera.ru/projects](https://cloud.amvera.ru/projects) (тип «Приложение»), имя например `reisoffice`.
+2. Конфигурацию в мастере **не задавайте** — её уже задаёт `amvera.yml`.
+3. Привяжите git и отправьте эту ветку в `master` Amvera:
+
+```bash
+git remote add amvera https://git.amvera.ru/<логин-amvera>/reisoffice
+git push amvera cursor/reisoffice-tms-improve-55c3:master
+```
+
+Логин и пароль — от кабинета Amvera, не от GitHub.
+4. В настройках проекта добавьте бесплатный домен Amvera. Адрес будет вида `https://reisoffice.<логин>.amvera.io`.
+
+Если откроете MCP Amvera в Cursor и пришлёте Bearer-токен из кабинета, можно создать проект и залить код без ручного push.
+
 ## Безопасность
 
 Файлы с паролями хостинга **не включены** в репозиторий. Если они уже уходили на почту или в облако — смените пароль базы и FTP в панели хостинга.
