@@ -130,7 +130,13 @@ export function truckViaPoints(from: LonLat, to: LonLat): LonLat[] {
       return t > tLast + 0.04 && haversineKm(last, h) <= MAX_AIR_KM && haversineKm(h, dest) < haversineKm(last, dest) - 30
     })
     if (candidates.length) {
-      path.push(candidates.reduce((best, h) => (projectT(from, dest, h) > projectT(from, dest, best) ? h : best)))
+      path.push(
+        candidates.reduce((best, h) => {
+          const score = haversineKm(last, h) + haversineKm(h, dest)
+          const bestScore = haversineKm(last, best) + haversineKm(best, dest)
+          return score < bestScore ? h : best
+        }),
+      )
     } else {
       const hop = haversineKm(last, dest)
       path.push(interpolate(last, dest, Math.min(0.92, MAX_AIR_KM / hop)))
