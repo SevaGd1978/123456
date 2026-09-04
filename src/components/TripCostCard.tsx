@@ -26,9 +26,9 @@ function formatDuration(min?: number): string {
 }
 
 function sourceLabel(r: DrivingKmResult): string {
-  if (r.source === 'osrm' || r.source === 'cache') {
+  if (r.source === 'truck' || r.source === 'cache') {
     const drive = formatDuration(r.durationMin)
-    return drive ? `OSM / OSRM · ${r.km} км · ${drive}` : `OSM / OSRM · ${r.km} км`
+    return drive ? `Грузовой маршрут · ${r.km} км · ${drive}` : `Грузовой маршрут · ${r.km} км`
   }
   return `По прямой × 1,25 · ${r.km} км`
 }
@@ -60,7 +60,7 @@ export function TripCostCard({
     }
     const mine = ++requestGen.current
     setBusy(true)
-    setHint('Считаем километраж по дороге…')
+    setHint('Считаем грузовой маршрут…')
     try {
       const result = await lookupDrivingKm(order.fromCity, order.toCity, order.fromAddress, order.toAddress)
       if (mine !== requestGen.current) return
@@ -99,8 +99,9 @@ export function TripCostCard({
       <div>
         <div className="font-serif text-xl">Себестоимость рейса</div>
         <p className="mt-1 text-xs text-[#6d614c]">
-          Километраж подставляется с открытой карты OSM (Photon / Nominatim) и маршрута OSRM по пунктам погрузки и
-          выгрузки. Формула: ЗП × км + «Платон» × км + расход 35 л / 100 км × цена литра.
+          Километраж — только грузовой: фура 16,5 м / 4 м / 20 т по дорогам OSM, где разрешены грузовики (Valhalla truck,
+          с предпочтением обозначенных truck route). Легковой профиль не используется. Формула: ЗП × км + «Платон» × км +
+          расход 35 л / 100 км × цена литра.
         </p>
       </div>
       <div className="grid gap-4 md:grid-cols-5">
@@ -126,7 +127,7 @@ export function TripCostCard({
               void applyRouteKm(true)
             }}
           >
-            {busy ? 'Считаем маршрут…' : 'По карте (OSM / OSRM)'}
+            {busy ? 'Считаем грузовой маршрут…' : 'По грузовому маршруту'}
           </button>
           {hint && <p className="mt-1 text-xs leading-relaxed text-[#4a4336]">{hint}</p>}
           {(order.fromCity.trim() || order.toCity.trim()) && (
