@@ -35,6 +35,17 @@ export const ROLE_LABEL: Record<Role, string> = {
   accountant: 'Бухгалтер',
 }
 
+export function formatPersonName(firstName: string, lastName: string): string {
+  return [firstName.trim(), lastName.trim()].filter(Boolean).join(' ')
+}
+
+export function formatSiteContact(firstName: string, lastName: string, phone: string): string {
+  const name = formatPersonName(firstName, lastName)
+  const tel = phone.trim()
+  if (name && tel) return `${name}, ${tel}`
+  return name || tel || '—'
+}
+
 export function nextNumber(existing: string[]): string {
   const year = new Date().getFullYear()
   let max = 0

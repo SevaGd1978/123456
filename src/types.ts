@@ -90,8 +90,14 @@ export type Order = {
   volumeM3: number
   fromCity: string
   fromAddress: string
+  fromContactFirstName: string
+  fromContactLastName: string
+  fromContactPhone: string
   toCity: string
   toAddress: string
+  toContactFirstName: string
+  toContactLastName: string
+  toContactPhone: string
   distanceKm: number
   driverPayPerKmKop: number
   platonPerKmKop: number

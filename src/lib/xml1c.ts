@@ -30,7 +30,7 @@ export function exportDocumentsXml(
       return `    <Документ тип="Реализация" номер="${xmlEscape(o.number)}" дата="${o.loadingDate}" срокОплаты="${o.paymentDueDate}">
       <Контрагент инн="${xmlEscape(client?.inn ?? '')}" кпп="${xmlEscape(client?.kpp ?? '')}" наименование="${xmlEscape(client?.name ?? '')}"/>
       <Исполнитель инн="${xmlEscape(carrier?.inn ?? '')}" наименование="${xmlEscape(carrier?.name ?? '')}"/>
-      <Маршрут погрузка="${xmlEscape(o.fromCity)}" выгрузка="${xmlEscape(o.toCity)}"/>
+      <Маршрут погрузка="${xmlEscape(o.fromCity)}" выгрузка="${xmlEscape(o.toCity)}" контактПогрузка="${xmlEscape([o.fromContactFirstName, o.fromContactLastName].filter(Boolean).join(' '))}" телПогрузка="${xmlEscape(o.fromContactPhone ?? '')}" контактВыгрузка="${xmlEscape([o.toContactFirstName, o.toContactLastName].filter(Boolean).join(' '))}" телВыгрузка="${xmlEscape(o.toContactPhone ?? '')}"/>
       <Груз наименование="${xmlEscape(o.cargo)}" вес="${xmlEscape(formatWeight(o.weightValue, o.weightUnit))}" объем="${o.volumeM3}" тара="${xmlEscape(o.packingCode)}"/>
       <Суммы нетто="${formatMoney(o.clientRateKop)}" ндс="${formatMoney(vat)}" ставка="${vatCode(o.vatRate)}" всего="${formatMoney(gross)}"/>
       <Услуги>

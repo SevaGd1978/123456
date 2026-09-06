@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { useStore } from '../store'
 import { Btn, Card } from '../components/ui'
 import { GoogleMapButton } from '../components/GoogleMapButton'
-import { formatDate } from '../lib/format'
+import { formatDate, formatSiteContact } from '../lib/format'
 import { formatMoney, grossAmount, vatAmount } from '../lib/money'
 import { formatWeight } from '../lib/weight'
 import { calcTripCost } from '../lib/tripCost'
@@ -86,6 +86,12 @@ export function DocumentsPage() {
           </div>
           <div>
             <b>Маршрут:</b> {order.fromCity}, {order.fromAddress} → {order.toCity}, {order.toAddress}
+          </div>
+          <div>
+            <b>Контакт на погрузке:</b> {formatSiteContact(order.fromContactFirstName, order.fromContactLastName, order.fromContactPhone)}
+          </div>
+          <div>
+            <b>Контакт на выгрузке:</b> {formatSiteContact(order.toContactFirstName, order.toContactLastName, order.toContactPhone)}
           </div>
           <div>
             <b>Груз:</b> {order.cargo}, {formatWeight(order.weightValue, order.weightUnit)}, {order.volumeM3} м³, тара{' '}

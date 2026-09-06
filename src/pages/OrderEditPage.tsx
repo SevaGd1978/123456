@@ -276,6 +276,66 @@ export function OrderEditPage() {
             <Field label="Адрес выгрузки">
               <Input value={order.toAddress} onChange={(e) => set('toAddress', e.target.value)} />
             </Field>
+            <div className="md:col-span-2 grid gap-4 md:grid-cols-2">
+              <div className="rounded-xl border border-[#efe3c8] bg-[#fffdf6] p-3">
+                <div className="mb-2 text-sm font-semibold">Контакт на погрузке</div>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <Field label="Имя">
+                    <Input
+                      value={order.fromContactFirstName}
+                      onChange={(e) => set('fromContactFirstName', e.target.value)}
+                      placeholder="Иван"
+                    />
+                  </Field>
+                  <Field label="Фамилия">
+                    <Input
+                      value={order.fromContactLastName}
+                      onChange={(e) => set('fromContactLastName', e.target.value)}
+                      placeholder="Иванов"
+                    />
+                  </Field>
+                  <div className="sm:col-span-2">
+                    <Field label="Телефон">
+                      <Input
+                        type="tel"
+                        value={order.fromContactPhone}
+                        onChange={(e) => set('fromContactPhone', e.target.value)}
+                        placeholder="+7 900 000-00-00"
+                      />
+                    </Field>
+                  </div>
+                </div>
+              </div>
+              <div className="rounded-xl border border-[#efe3c8] bg-[#fffdf6] p-3">
+                <div className="mb-2 text-sm font-semibold">Контакт на выгрузке</div>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <Field label="Имя">
+                    <Input
+                      value={order.toContactFirstName}
+                      onChange={(e) => set('toContactFirstName', e.target.value)}
+                      placeholder="Ольга"
+                    />
+                  </Field>
+                  <Field label="Фамилия">
+                    <Input
+                      value={order.toContactLastName}
+                      onChange={(e) => set('toContactLastName', e.target.value)}
+                      placeholder="Петрова"
+                    />
+                  </Field>
+                  <div className="sm:col-span-2">
+                    <Field label="Телефон">
+                      <Input
+                        type="tel"
+                        value={order.toContactPhone}
+                        onChange={(e) => set('toContactPhone', e.target.value)}
+                        placeholder="+7 900 000-00-00"
+                      />
+                    </Field>
+                  </div>
+                </div>
+              </div>
+            </div>
             <div className="md:col-span-2">
               <GoogleMapButton
                 fromCity={order.fromCity}

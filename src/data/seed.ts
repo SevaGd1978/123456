@@ -71,6 +71,9 @@ const CARGO = [
 
 const PACK = ['4A', '33', '1A2', '4G', '3H1']
 
+const FIRST_NAMES = ['Иван', 'Алексей', 'Сергей', 'Дмитрий', 'Ольга', 'Елена', 'Марина', 'Павел']
+const LAST_NAMES = ['Иванов', 'Петров', 'Сидоров', 'Кузнецов', 'Смирнова', 'Попова', 'Соколов', 'Морозова']
+
 export function createSeed(): AppState {
   const rand = mulberry32(20260904)
   const pick = <T,>(arr: T[]) => arr[Math.floor(rand() * arr.length)]!
@@ -292,8 +295,14 @@ export function createSeed(): AppState {
       volumeM3: 8 + Math.round(rand() * 70),
       fromCity: from,
       fromAddress: 'терминал А, ворота 3',
+      fromContactFirstName: pick(FIRST_NAMES),
+      fromContactLastName: pick(LAST_NAMES),
+      fromContactPhone: `+7 9${Math.floor(100000000 + rand() * 899999999)}`,
       toCity: to,
       toAddress: 'склад B, док 2',
+      toContactFirstName: pick(FIRST_NAMES),
+      toContactLastName: pick(LAST_NAMES),
+      toContactPhone: `+7 9${Math.floor(100000000 + rand() * 899999999)}`,
       clientRateKop: rubToKop(clientRate),
       carrierRateKop: rubToKop(carrierRate),
       extraExpenseKop: rubToKop(Math.floor(rand() * 4000)),

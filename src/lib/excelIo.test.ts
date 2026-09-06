@@ -71,8 +71,14 @@ describe('excelIo', () => {
           volumeM3: 40,
           fromCity: 'Москва',
           fromAddress: 'терминал А',
+          fromContactFirstName: 'Иван',
+          fromContactLastName: 'Иванов',
+          fromContactPhone: '+7 900 111-22-33',
           toCity: 'Казань',
           toAddress: 'склад B',
+          toContactFirstName: 'Ольга',
+          toContactLastName: 'Петрова',
+          toContactPhone: '+7 900 444-55-66',
           distanceKm: 845,
           driverPayPerKmKop: 1650,
           platonPerKmKop: 292,
@@ -97,6 +103,12 @@ describe('excelIo', () => {
     assert.equal(order?.number, 'РО-100')
     assert.equal(order?.fromCity, 'Москва')
     assert.equal(order?.toCity, 'Казань')
+    assert.equal(order?.fromContactFirstName, 'Иван')
+    assert.equal(order?.fromContactLastName, 'Иванов')
+    assert.equal(order?.fromContactPhone, '+7 900 111-22-33')
+    assert.equal(order?.toContactFirstName, 'Ольга')
+    assert.equal(order?.toContactLastName, 'Петрова')
+    assert.equal(order?.toContactPhone, '+7 900 444-55-66')
     assert.equal(order?.distanceKm, 845)
     assert.equal(order?.clientRateKop, 10_000_000)
     assert.equal(order?.status, 'confirmed')
