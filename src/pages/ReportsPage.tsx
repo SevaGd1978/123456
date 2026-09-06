@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import { useStore } from '../store'
 import { Card } from '../components/ui'
+import { ExcelAnalyzeCard } from '../components/ExcelAnalyzeCard'
 import { formatMoney, marginKop, vatAmount } from '../lib/money'
 import { calcTripCost } from '../lib/tripCost'
 
@@ -42,6 +43,8 @@ export function ReportsPage() {
   return (
     <div className="space-y-4 p-6">
       <h1 className="stamp text-3xl">Отчёты</h1>
+      <ExcelAnalyzeCard />
+      <div className="font-serif text-xl">Текущая база</div>
       <div className="grid gap-4 md:grid-cols-3">
         <Card className="p-5">
           <div className="text-[11px] uppercase tracking-[0.14em] text-[#6d614c]">Рейсов</div>
