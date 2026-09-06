@@ -51,21 +51,25 @@ function load(): AppState {
   try {
     const raw = localStorage.getItem(KEY)
     if (!raw) return seed
-    const saved = JSON.parse(raw) as Partial<AppState>
-    const settings = { ...seed.settings, ...saved.settings, dadataToken: saved.settings?.dadataToken ?? seed.settings.dadataToken }
-    const orders = (saved.orders?.length ? saved.orders : seed.orders).map((o) => hydrateOrder(o, settings))
-    return {
-      ...seed,
-      ...saved,
-      users: seed.users,
-      settings,
-      orders,
-      parties: saved.parties?.length ? saved.parties : seed.parties,
-      vehicles: saved.vehicles?.length ? saved.vehicles : seed.vehicles,
-      drivers: saved.drivers?.length ? saved.drivers : seed.drivers,
-    }
+    return mergePersisted(seed, JSON.parse(raw) as Partial<AppState>)
   } catch {
     return seed
+  }
+}
+
+/** Empty arrays after a wipe must not fall back to the demo seed. */
+export function mergePersisted(seed: AppState, saved: Partial<AppState>): AppState {
+  const settings = { ...seed.settings, ...saved.settings, dadataToken: saved.settings?.dadataToken ?? seed.settings.dadataToken }
+  const orders = (Array.isArray(saved.orders) ? saved.orders : seed.orders).map((o) => hydrateOrder(o, settings))
+  return {
+    ...seed,
+    ...saved,
+    users: seed.users,
+    settings,
+    orders,
+    parties: Array.isArray(saved.parties) ? saved.parties : seed.parties,
+    vehicles: Array.isArray(saved.vehicles) ? saved.vehicles : seed.vehicles,
+    drivers: Array.isArray(saved.drivers) ? saved.drivers : seed.drivers,
   }
 }
 
