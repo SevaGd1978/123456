@@ -11,6 +11,7 @@ import { calcTripCost } from '../lib/tripCost'
 import { applyDraft, blankParty } from '../lib/innLookup'
 import { isValidInn } from '../lib/inn'
 import { InnFillButton } from '../components/InnFillButton'
+import { GoogleMapButton } from '../components/GoogleMapButton'
 import type { Order, Party, WeightUnit } from '../types'
 
 function rubField(kop: number, onKop: (n: number) => void) {
@@ -83,6 +84,12 @@ export function OrderEditPage() {
           >
             Сохранить
           </Btn>
+          <GoogleMapButton
+            fromCity={order.fromCity}
+            toCity={order.toCity}
+            fromAddress={order.fromAddress}
+            toAddress={order.toAddress}
+          />
           <Btn tone="ghost" onClick={() => nav('/app/documents')}>
             К документам
           </Btn>
@@ -269,6 +276,19 @@ export function OrderEditPage() {
             <Field label="Адрес выгрузки">
               <Input value={order.toAddress} onChange={(e) => set('toAddress', e.target.value)} />
             </Field>
+            <div className="md:col-span-2">
+              <GoogleMapButton
+                fromCity={order.fromCity}
+                toCity={order.toCity}
+                fromAddress={order.fromAddress}
+                toAddress={order.toAddress}
+                tone="ghost"
+                label="Открыть маршрут на карте"
+              />
+              <p className="mt-1 text-xs text-[#6d614c]">
+                Google Карты с точками погрузки и выгрузки из заявки. Нужны оба города.
+              </p>
+            </div>
             <Field label="ТС">
               <Select value={order.vehicleId} onChange={(e) => set('vehicleId', e.target.value)}>
                 <option value="">—</option>

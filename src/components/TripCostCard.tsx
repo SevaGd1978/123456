@@ -3,6 +3,7 @@ import { calcTripCost, formatLiters } from '../lib/tripCost'
 import { lookupDrivingKm, type DrivingKmResult } from '../lib/roadKm'
 import { formatMoney, kopToRub } from '../lib/money'
 import { Card, Field, Input } from './ui'
+import { googleMapsDirectionsUrl, openGoogleMapsRoute } from '../lib/googleMaps'
 import type { Order } from '../types'
 
 function kopRateValue(kop: number): string {
@@ -118,17 +119,27 @@ export function TripCostCard({
               }}
             />
           </div>
-          <button
-            type="button"
-            className="mt-1 text-xs text-[#8a5a12] underline disabled:opacity-50"
-            disabled={busy || !order.fromCity.trim() || !order.toCity.trim()}
-            onClick={() => {
-              kmLockedFor.current = null
-              void applyRouteKm(true)
-            }}
-          >
-            {busy ? 'Считаем грузовой маршрут…' : 'По грузовому маршруту'}
-          </button>
+          <div className="mt-2 flex flex-wrap items-center gap-3">
+            <button
+              type="button"
+              className="text-xs text-[#8a5a12] underline disabled:opacity-50"
+              disabled={busy || !order.fromCity.trim() || !order.toCity.trim()}
+              onClick={() => {
+                kmLockedFor.current = null
+                void applyRouteKm(true)
+              }}
+            >
+              {busy ? 'Считаем грузовой маршрут…' : 'По грузовому маршруту'}
+            </button>
+            <button
+              type="button"
+              className="text-xs text-[#8a5a12] underline disabled:opacity-50"
+              disabled={!googleMapsDirectionsUrl(order.fromCity, order.toCity, order.fromAddress, order.toAddress)}
+              onClick={() => openGoogleMapsRoute(order.fromCity, order.toCity, order.fromAddress, order.toAddress)}
+            >
+              Карта Google
+            </button>
+          </div>
           {hint && <p className="mt-1 text-xs leading-relaxed text-[#4a4336]">{hint}</p>}
           {(order.fromCity.trim() || order.toCity.trim()) && (
             <p className="mt-1 text-[11px] leading-relaxed text-[#6d614c]" title={[last?.fromLabel, last?.toLabel].filter(Boolean).join(' → ')}>

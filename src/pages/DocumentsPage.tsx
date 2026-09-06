@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useStore } from '../store'
 import { Btn, Card } from '../components/ui'
+import { GoogleMapButton } from '../components/GoogleMapButton'
 import { formatDate } from '../lib/format'
 import { formatMoney, grossAmount, vatAmount } from '../lib/money'
 import { formatWeight } from '../lib/weight'
@@ -38,7 +39,15 @@ export function DocumentsPage() {
           <h1 className="stamp text-3xl">Счёт / заявка</h1>
           <p className="text-sm text-[#6d614c]">Печать в браузере — без отдельного Windows-клиента.</p>
         </div>
-        <Btn onClick={() => window.print()}>Печать</Btn>
+        <div className="flex flex-wrap gap-2">
+          <GoogleMapButton
+            fromCity={order.fromCity}
+            toCity={order.toCity}
+            fromAddress={order.fromAddress}
+            toAddress={order.toAddress}
+          />
+          <Btn onClick={() => window.print()}>Печать</Btn>
+        </div>
       </div>
       <div className="no-print">
         <select
