@@ -4,6 +4,7 @@ import { InnFillButton } from '../components/InnFillButton'
 import { ROLE_LABEL, formatDate } from '../lib/format'
 import { kopToRub } from '../lib/money'
 import { applyDraft } from '../lib/innLookup'
+import { DatabaseCard } from '../components/DatabaseCard'
 
 export function SettingsPage() {
   const { users, settings, parties, audit, resetDemo, updateSettings, saveParty, log } = useStore()
@@ -135,6 +136,7 @@ export function SettingsPage() {
             Сбросить демо-базу
           </Btn>
         </Card>
+        <DatabaseCard />
       </div>
       <Card className="p-5">
         <div className="font-serif text-xl">Журнал действий</div>

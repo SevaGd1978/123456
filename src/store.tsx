@@ -8,6 +8,7 @@ import {
 } from 'react'
 import { createSeed, passwordFingerprint } from './data/seed'
 import type { AppState, AuditEvent, ExchangeJob, Order, Party } from './types'
+import type { ExcelImportResult } from './lib/excelIo'
 import { nextNumber, todayIso } from './lib/format'
 import { estimateRoadKm } from './lib/tripCost'
 
@@ -24,6 +25,8 @@ type Store = AppState & {
   addExchange: (job: Omit<ExchangeJob, 'id' | 'at'>) => void
   updateSettings: (patch: Partial<AppState['settings']>) => void
   resetDemo: () => void
+  wipeDatabase: (password: string) => { ok: true } | { ok: false; error: string }
+  applyImport: (imported: ExcelImportResult) => void
 }
 
 const Ctx = createContext<Store | null>(null)
@@ -185,6 +188,43 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       resetDemo: () => {
         localStorage.removeItem(KEY)
         setState(createSeed())
+      },
+      wipeDatabase: (password) => {
+        if (currentUser?.role !== 'director') {
+          return { ok: false, error: 'Очистить базу может только директор' }
+        }
+        if (currentUser.passwordHash !== passwordFingerprint(currentUser.login, password)) {
+          return { ok: false, error: 'Неверный пароль' }
+        }
+        commit((prev) => {
+          const own = prev.parties.filter((p) => p.kind === 'own' || p.id === prev.settings.companyId)
+          const ev: AuditEvent = {
+            id: `a-wipe-${Date.now()}`,
+            at: new Date().toISOString(),
+            user: currentUser.name,
+            action: 'Очищена база (рейсы, справочники, парк)',
+            entity: 'db',
+          }
+          return {
+            ...prev,
+            parties: own,
+            vehicles: [],
+            drivers: [],
+            orders: [],
+            exchange: [],
+            audit: [ev],
+          }
+        })
+        return { ok: true }
+      },
+      applyImport: (imported) => {
+        commit((prev) => ({
+          ...prev,
+          parties: imported.parties,
+          vehicles: imported.vehicles,
+          drivers: imported.drivers,
+          orders: imported.orders,
+        }))
       },
     }
   }, [state, commit, log])
