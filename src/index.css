@@ -1,0 +1,73 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Manrope", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Source Serif 4", ui-serif, Georgia, serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+  --color-ink: #161410;
+  --color-paper: #efe6d4;
+  --color-paper-2: #f7f1e4;
+  --color-moss: #14221c;
+  --color-moss-2: #1d3329;
+  --color-gold: #c8922a;
+  --color-gold-2: #e4b45a;
+  --color-brick: #a33b24;
+  --color-pine: #2f6f55;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  color: var(--color-ink);
+  background:
+    radial-gradient(1200px 500px at 10% -10%, #f4e7c8 0%, transparent 55%),
+    linear-gradient(180deg, #f3ead8 0%, #e7dcc4 100%);
+  font-family: var(--font-sans);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+.waybill-grid {
+  background-image:
+    linear-gradient(to right, rgba(20, 34, 28, 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(20, 34, 28, 0.05) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+.stamp {
+  font-family: var(--font-serif);
+  letter-spacing: 0.04em;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbb892;
+  border-radius: 99px;
+}
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  body {
+    background: white;
+  }
+}
