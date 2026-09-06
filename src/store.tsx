@@ -7,7 +7,8 @@ import {
   type ReactNode,
 } from 'react'
 import { createSeed, passwordFingerprint } from './data/seed'
-import type { AppState, AuditEvent, ExchangeJob, Order, Party } from './types'
+import type { AppState, AuditEvent, ExchangeJob, Order, Party, Role, User } from './types'
+import { createEmployee, mergeUsers, normalizeLogin } from './lib/employees'
 import type { ExcelImportResult } from './lib/excelIo'
 import { nextNumber, todayIso } from './lib/format'
 import { estimateRoadKm } from './lib/tripCost'
@@ -27,6 +28,12 @@ type Store = AppState & {
   resetDemo: () => void
   wipeDatabase: (password: string) => { ok: true } | { ok: false; error: string }
   applyImport: (imported: ExcelImportResult) => void
+  addEmployee: (input: {
+    name: string
+    login: string
+    password: string
+    role: Role
+  }) => { ok: true; user: User } | { ok: false; error: string }
 }
 
 const Ctx = createContext<Store | null>(null)
@@ -70,7 +77,7 @@ export function mergePersisted(seed: AppState, saved: Partial<AppState>): AppSta
   return {
     ...seed,
     ...saved,
-    users: seed.users,
+    users: mergeUsers(seed.users, saved.users),
     settings,
     orders,
     parties: Array.isArray(saved.parties) ? saved.parties : seed.parties,
@@ -89,6 +96,7 @@ function persist(state: AppState) {
     audit: state.audit,
     exchange: state.exchange,
     settings: state.settings,
+    users: state.users,
   }
   try {
     localStorage.setItem(KEY, JSON.stringify(payload))
@@ -99,6 +107,7 @@ function persist(state: AppState) {
         JSON.stringify({
           session: payload.session,
           settings: payload.settings,
+          users: payload.users,
           audit: payload.audit.slice(0, 40),
           exchange: payload.exchange.slice(0, 20),
         }),
@@ -143,8 +152,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       ...state,
       currentUser,
       login: (login, password) => {
-        const user = state.users.find((u) => u.login === login)
-        if (!user || user.passwordHash !== passwordFingerprint(login, password)) {
+        const user = state.users.find((u) => normalizeLogin(u.login) === normalizeLogin(login))
+        if (!user || user.passwordHash !== passwordFingerprint(user.login, password)) {
           return 'Неверный логин или пароль'
         }
         commit((prev) => ({ ...prev, session: { userId: user.id } }))
@@ -235,6 +244,16 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           drivers: imported.drivers,
           orders: imported.orders,
         }))
+      },
+      addEmployee: (input) => {
+        if (currentUser?.role !== 'director') {
+          return { ok: false, error: 'Добавить сотрудника может только директор' }
+        }
+        const res = createEmployee(input, state.users)
+        if (!res.ok) return res
+        commit((prev) => ({ ...prev, users: [...prev.users, res.user] }))
+        log(`Добавлен сотрудник ${res.user.name} (${res.user.login})`, 'user')
+        return res
       },
     }
   }, [state, commit, log])

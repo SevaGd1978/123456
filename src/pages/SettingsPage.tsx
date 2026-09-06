@@ -1,13 +1,14 @@
 import { useStore } from '../store'
-import { Btn, Card, Field, Input } from '../components/ui'
+import { Card, Field, Input } from '../components/ui'
 import { InnFillButton } from '../components/InnFillButton'
-import { ROLE_LABEL, formatDate } from '../lib/format'
+import { formatDate } from '../lib/format'
 import { kopToRub } from '../lib/money'
 import { applyDraft } from '../lib/innLookup'
 import { DatabaseCard } from '../components/DatabaseCard'
+import { UsersCard } from '../components/UsersCard'
 
 export function SettingsPage() {
-  const { users, settings, parties, audit, resetDemo, updateSettings, saveParty, log } = useStore()
+  const { settings, parties, audit, updateSettings, saveParty, log } = useStore()
   const company = parties.find((p) => p.id === settings.companyId)
 
   return (
@@ -120,22 +121,7 @@ export function SettingsPage() {
             />
           </Field>
         </Card>
-        <Card className="p-5">
-          <div className="font-serif text-xl">Пользователи</div>
-          <ul className="mt-3 space-y-2 text-sm">
-            {users.map((u) => (
-              <li key={u.id} className="flex justify-between border-b border-[#efe3c8] py-2">
-                <span>
-                  {u.name} · {u.login}
-                </span>
-                <span className="text-[#6d614c]">{ROLE_LABEL[u.role]}</span>
-              </li>
-            ))}
-          </ul>
-          <Btn tone="ghost" className="mt-4" onClick={() => resetDemo()}>
-            Сбросить демо-базу
-          </Btn>
-        </Card>
+        <UsersCard />
         <DatabaseCard />
       </div>
       <Card className="p-5">

@@ -26,7 +26,7 @@ export function LoginPage() {
       >
         <div className="font-serif text-3xl">Вход в РейсОфис</div>
         <p className="mt-2 text-sm text-[#6d614c]">
-          Пароли демо-ролей показаны ниже — они не лежат в ini рядом с базой.
+          Демо-роли ниже. Новых сотрудников директор заводит в настройках — они входят тем же окном.
         </p>
         <div className="mt-6 space-y-4">
           <Field label="Логин">
