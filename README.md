@@ -12,12 +12,27 @@
 - умеет прислать сводку в Telegram или на webhook;
 - не хранит пароли «Госуслуг» и не показывает посторонние персональные данные.
 
-Официальный сайт ГИБДД требует капчу, а ГИС ГМП доступен организациям по договору. Поэтому в комплекте два режима:
+Официального публичного API у ГИБДД нет: сайт требует капчу, ГИС ГМП — договор. Подключён бесплатный агрегатор:
 
 | `FINES_PROVIDER` | Что делает |
 | --- | --- |
-| `demo` | Учебные постановления, чтобы сразу увидеть панель на 30 машинах |
-| `http` | Запросы к **вашему** легальному API (`FINES_API_URL?plate=&sts=`) |
+| `assist` | **API Assist**, [бесплатно 200 запросов/мес](https://api-assist.com/api/fines) |
+| `demo` | Учебные постановления, чтобы сразу увидеть панель |
+| `cloud` | [API-CLOUD](https://api-cloud.ru/gibdd), ключ по заявке |
+| `http` | Ваш API: `FINES_API_URL?plate=&sts=` |
+
+200 бесплатных запросов хватает примерно на 6 полных проверок 30 машин. Для ежедневной проверки всего парка нужен платный лимит (~900 запросов/мес) или проверка реже.
+
+Ключ Assist: напишите на support@api-assist.com, затем:
+
+```bash
+cp .env.example .env
+# ASSIST_API_KEY=ваш_ключ
+# FINES_PROVIDER=assist
+npm start
+```
+
+Если ключ задан, живой API включается автоматически.
 
 ## Запуск
 
@@ -45,8 +60,10 @@ npm run check
 
 - `CHECK_TIME=20:00` — ежедневный запуск;
 - `TIMEZONE=Europe/Moscow`;
-- `FINES_PROVIDER=demo` или `http`;
-- `FINES_API_URL` / `FINES_API_TOKEN` — если используете свой API;
+- `FINES_PROVIDER=assist` — бесплатный API Assist;
+- `ASSIST_API_KEY` — ключ Assist (без него остаётся demo);
+- `CLOUD_API_TOKEN` — ключ API-CLOUD;
+- `FINES_API_URL` / `FINES_API_TOKEN` — свой HTTP API;
 - `TELEGRAM_BOT_TOKEN` и `TELEGRAM_CHAT_ID` — вечерняя сводка;
 - `WEBHOOK_URL` — POST JSON на ваш URL;
 - `API_TOKEN` — если задан, все `/api/*` требуют `Authorization: Bearer …`.

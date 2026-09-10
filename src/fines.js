@@ -87,19 +87,25 @@ export function normalizeUin(value) {
 }
 
 export function normalizeFine(raw, { discount, today = new Date().toISOString().slice(0, 10) } = {}) {
-  const amount = parseAmount(raw.amount ?? raw.sum ?? raw.summa);
+  const amount = parseAmount(raw.amount ?? raw.sum ?? raw.summa ?? raw.Summa);
   const base = {
-    uin: normalizeUin(raw.uin ?? raw.billId ?? raw.supplierBillID ?? raw.number),
+    uin: normalizeUin(raw.uin ?? raw.billId ?? raw.supplierBillID ?? raw.number ?? raw.num_post ?? raw.NumPost),
     amount,
     paid: Boolean(raw.paid ?? raw.isPaid ?? false),
-    decisionDate: parseDate(raw.decisionDate ?? raw.datePostanovlenie ?? raw.dateDecis),
-    violationDate: parseDate(raw.violationDate ?? raw.dateDecision ?? raw.dateViolation),
-    article: String(raw.article ?? raw.koapCode ?? raw.kopArticle ?? "").trim(),
-    description: String(raw.description ?? raw.offenceName ?? raw.violation ?? "").trim(),
-    division: String(raw.division ?? raw.divisionName ?? raw.department ?? "").trim(),
-    location: String(raw.location ?? raw.place ?? "").trim(),
+    decisionDate: parseDate(
+      raw.decisionDate ?? raw.datePostanovlenie ?? raw.date_post ?? raw.DatePost ?? raw.dateDecis,
+    ),
+    violationDate: parseDate(
+      raw.violationDate ?? raw.dateDecision ?? raw.dateViolation ?? raw.DateDecis,
+    ),
+    article: String(raw.article ?? raw.koapCode ?? raw.kopArticle ?? raw.KoAPcode ?? "").trim(),
+    description: String(
+      raw.description ?? raw.offenceName ?? raw.violation ?? raw.KoAPtext ?? "",
+    ).trim(),
+    division: String(raw.division ?? raw.divisionName ?? raw.department ?? raw.division_name ?? "").trim(),
+    location: String(raw.location ?? raw.place ?? raw.division_address ?? "").trim(),
     photoUrl: typeof raw.photoUrl === "string" ? raw.photoUrl : "",
-    discountUntil: parseDate(raw.discountUntil ?? raw.discountDate),
+    discountUntil: parseDate(raw.discountUntil ?? raw.discountDate ?? raw.date_discount ?? raw.DateDiscount),
     discountAmount:
       raw.discountAmount === undefined || raw.discountAmount === null
         ? null

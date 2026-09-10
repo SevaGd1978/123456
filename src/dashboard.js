@@ -1,3 +1,5 @@
+import { describeProvider } from "./providers/index.js";
+
 export function maskSts(sts = "") {
   const value = String(sts);
   if (value.length <= 4) return "••••";
@@ -65,6 +67,7 @@ export function buildDashboard({ vehicles, state, config, nextCheck, checking })
     discount: config.discount,
     nextCheckAt: nextCheck ? nextCheck.toISOString() : null,
     lastCheck: state.lastCheck,
+    providerInfo: describeProvider(config),
     fleet,
     vehicles: rows,
     history: (state.history || []).slice(0, 14),

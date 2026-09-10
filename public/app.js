@@ -146,6 +146,12 @@ function render(data) {
   renderTable(data);
   renderHistory(data);
   renderCountdown(data);
+  const line = document.querySelector("#provider-line");
+  if (line && data.providerInfo) {
+    line.textContent = data.providerInfo.live
+      ? `${data.providerInfo.label}${data.providerInfo.quota ? ` · ${data.providerInfo.quota}` : ""}`
+      : "Учебные данные · задайте ASSIST_API_KEY для живых штрафов";
+  }
   runBtn.disabled = data.checking;
   runBtn.textContent = data.checking ? "Идёт проверка…" : "Проверить сейчас";
   if (data.lastCheck && !data.checking) {

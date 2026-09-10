@@ -35,6 +35,10 @@ export const DISCOUNT_DEFAULTS = { percent: 25, days: 30 };
 
 export function loadConfig(env = process.env) {
   const checkTime = parseCheckTime(env.CHECK_TIME, "20:00");
+  const provider =
+    env.FINES_PROVIDER ||
+    (env.ASSIST_API_KEY ? "assist" : env.CLOUD_API_TOKEN ? "cloud" : "demo");
+  const remote = provider !== "demo";
 
   return {
     port: readNumber(env.PORT, 3000, { min: 1, max: 65535 }),
@@ -42,9 +46,9 @@ export function loadConfig(env = process.env) {
     timezone: env.TIMEZONE || "Europe/Moscow",
     checkTime,
     checkOnStart: readBoolean(env.CHECK_ON_START, false),
-    provider: env.FINES_PROVIDER || "demo",
-    concurrency: readNumber(env.CHECK_CONCURRENCY, env.FINES_PROVIDER === "http" ? 2 : 8, { min: 1, max: 10 }),
-    requestDelayMs: readNumber(env.REQUEST_DELAY_MS, env.FINES_PROVIDER === "http" ? 1500 : 0, { min: 0, max: 60_000 }),
+    provider,
+    concurrency: readNumber(env.CHECK_CONCURRENCY, remote ? 2 : 8, { min: 1, max: 10 }),
+    requestDelayMs: readNumber(env.REQUEST_DELAY_MS, remote ? 1500 : 0, { min: 0, max: 60_000 }),
     requestTimeoutMs: readNumber(env.REQUEST_TIMEOUT_MS, 20_000, { min: 1000, max: 120_000 }),
     retryAttempts: readNumber(env.RETRY_ATTEMPTS, 3, { min: 1, max: 10 }),
     vehiclesFile: resolvePath(env.VEHICLES_FILE || "config/vehicles.json"),
@@ -55,10 +59,13 @@ export function loadConfig(env = process.env) {
       percent: readNumber(env.DISCOUNT_PERCENT, DISCOUNT_DEFAULTS.percent, { min: 0, max: 100 }),
       days: readNumber(env.DISCOUNT_DAYS, DISCOUNT_DEFAULTS.days, { min: 1, max: 365 }),
     },
-    gibdd: {
-      baseUrl: env.GIBDD_BASE_URL || "https://xn--90adear.xn--p1ai",
-      captchaUrl: env.CAPTCHA_SOLVER_URL || "",
-      captchaToken: env.CAPTCHA_SOLVER_TOKEN || "",
+    assist: {
+      key: env.ASSIST_API_KEY || "",
+      url: env.ASSIST_API_URL || "https://service.api-assist.com/parser/fines_api/fines",
+    },
+    cloud: {
+      token: env.CLOUD_API_TOKEN || "",
+      url: env.CLOUD_API_URL || "https://api-cloud.ru/api/gibdd.php",
     },
     api: {
       url: env.FINES_API_URL || "",

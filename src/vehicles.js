@@ -17,6 +17,23 @@ export function normalizeSts(value = "") {
   return String(value).toUpperCase().replace(/[^0-9A-ZА-Я]/g, "");
 }
 
+const LATIN_TO_CYRILLIC = {
+  A: "А", B: "В", E: "Е", K: "К", M: "М", H: "Н",
+  O: "О", P: "Р", C: "С", T: "Т", Y: "У", X: "Х",
+};
+
+/** Госномер кириллицей — так его ждут API ГИБДД. */
+export function toGibddPlate(value = "") {
+  return normalizePlate(value).replace(/[A-Z]/g, (letter) => LATIN_TO_CYRILLIC[letter] || letter);
+}
+
+/** СТС без разделителей; если серия цифровая — 10 цифр. */
+export function toGibddSts(value = "") {
+  const sts = normalizeSts(value);
+  const digits = sts.replace(/\D/g, "");
+  return digits.length === 10 ? digits : sts;
+}
+
 export function formatPlate(value = "") {
   const plate = String(value).toUpperCase().replace(/\s+/g, "");
   const match = /^([А-ЯA-Z])(\d{3})([А-ЯA-Z]{2})(\d{2,3})$/.exec(plate);
