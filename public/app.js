@@ -234,6 +234,9 @@ runBtn.addEventListener("click", async () => {
 });
 
 document.querySelector("#open-editor").addEventListener("click", openEditor);
+document.querySelector("#open-api-help").addEventListener("click", () => {
+  document.querySelector("#api-help").showModal();
+});
 document.querySelector("#add-vehicle").addEventListener("click", () => {
   if (editorBody.querySelectorAll("tr").length >= 40) {
     editorError.textContent = "Слишком много записей. Оставьте рабочий список около 30 машин.";

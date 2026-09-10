@@ -45,6 +45,8 @@ describe("http api", () => {
     const response = await fetch(baseUrl);
     assert.equal(response.status, 200);
     assert.match(await response.text(), /Смена 20:00/);
+    const help = await fetch(baseUrl);
+    assert.match(await help.text(), /CLOUD_API_TOKEN/);
   });
 
   it("returns a 30-car dashboard after a check", async () => {

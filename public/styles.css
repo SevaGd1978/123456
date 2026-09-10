@@ -161,6 +161,20 @@ dialog footer { display: flex; gap: 10px; align-items: center; border-top: 1px s
   padding: 8px;
 }
 .editor-table tbody tr { cursor: default; }
+.help-dialog { display: flex; flex-direction: column; max-height: 86vh; }
+.help-body { padding: 0 18px 12px; overflow: auto; display: grid; gap: 18px; }
+.help-body h3 { margin: 0 0 8px; font-size: 15px; letter-spacing: 0; text-transform: none; color: var(--text); }
+.help-body ol { margin: 0; padding-left: 18px; color: var(--muted); font-size: 13px; line-height: 1.55; }
+.help-body a { color: var(--amber); text-decoration: underline; }
+.help-body pre {
+  margin: 10px 0 0;
+  padding: 12px;
+  background: #141310;
+  border: 1px solid var(--line);
+  font-family: var(--mono);
+  font-size: 12px;
+  overflow: auto;
+}
 
 @media (max-width: 900px) {
   .stats, .workspace, .top, .board-head { grid-template-columns: 1fr; display: flex; flex-wrap: wrap; }

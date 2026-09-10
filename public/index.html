@@ -38,6 +38,7 @@
               <button class="chip" data-filter="unpaid" type="button">Неоплаченные</button>
               <button class="chip" data-filter="errors" type="button">Ошибки</button>
             </div>
+            <button id="open-api-help" class="ghost" type="button">Платный API</button>
             <button id="open-editor" class="ghost" type="button">Список машин</button>
           </div>
           <div class="table-wrap">
@@ -71,6 +72,42 @@
         </aside>
       </section>
     </main>
+
+    <dialog id="api-help">
+      <form method="dialog" class="help-dialog">
+        <header>
+          <h2>Как подключить платный API</h2>
+          <p>Бесплатных 200 запросов не хватит на 30 машин каждый вечер. Нужно около 900 запросов в месяц.</p>
+        </header>
+        <div class="help-body">
+          <article>
+            <h3>API-CLOUD — для автопарка</h3>
+            <ol>
+              <li>Откройте <a href="https://api-cloud.ru/tarif" target="_blank" rel="noopener noreferrer">тарифы</a> и <a href="https://api-cloud.ru/gibdd" target="_blank" rel="noopener noreferrer">документацию штрафов</a>.</li>
+              <li>Напишите на <a href="mailto:support@api-cloud.ru">support@api-cloud.ru</a>: нужны методы <code>fines</code>, около 900 запросов/мес, цель — мониторинг своего автопарка, реквизиты ООО или ИП и название ЭДО.</li>
+              <li>Дождитесь регистрационного кода (до 7 рабочих дней). Ключ копируется в кабинете.</li>
+              <li>В файле <code>.env</code> укажите:</li>
+            </ol>
+            <pre>FINES_PROVIDER=cloud
+CLOUD_API_TOKEN=ваш_токен</pre>
+            <p class="muted">Ориентир: минимальный платёж 700 ₽/мес при &lt; 2000 запросов плюс оплата успешных запросов. Актуальные цены — на сайте API-CLOUD, это не оферта.</p>
+          </article>
+          <article>
+            <h3>API Assist — платный лимит</h3>
+            <ol>
+              <li>Напишите на <a href="mailto:support@api-assist.com">support@api-assist.com</a>: нужен лимит от 900 запросов/мес.</li>
+              <li>Полученный ключ пропишите так:</li>
+            </ol>
+            <pre>FINES_PROVIDER=assist
+ASSIST_API_KEY=ваш_ключ</pre>
+            <p class="muted">Документация: <a href="https://api-assist.com/api/fines" target="_blank" rel="noopener noreferrer">api-assist.com/api/fines</a>. Цена платного тарифа по запросу.</p>
+          </article>
+        </div>
+        <footer>
+          <button value="close" class="primary">Понятно</button>
+        </footer>
+      </form>
+    </dialog>
 
     <dialog id="editor">
       <form id="editor-form" method="dialog">
