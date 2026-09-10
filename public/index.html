@@ -22,50 +22,53 @@
           <b id="next-check">—</b>
         </div>
         <button id="run-check" class="primary" type="button">Проверить сейчас</button>
+        <span id="check-status" class="muted"></span>
       </div>
     </header>
 
     <main>
       <section class="stats" id="stats"></section>
 
-      <section class="board">
-        <div class="board-head">
-          <h1>Автопарк</h1>
-          <div class="filters" role="tablist">
-            <button class="chip active" data-filter="all" type="button">Все</button>
-            <button class="chip" data-filter="unpaid" type="button">Неоплаченные</button>
-            <button class="chip" data-filter="errors" type="button">Ошибки</button>
+      <section class="workspace">
+        <section class="board">
+          <div class="board-head">
+            <h1>Автопарк</h1>
+            <div class="filters" role="tablist">
+              <button class="chip active" data-filter="all" type="button">Все</button>
+              <button class="chip" data-filter="unpaid" type="button">Неоплаченные</button>
+              <button class="chip" data-filter="errors" type="button">Ошибки</button>
+            </div>
+            <button id="open-editor" class="ghost" type="button">Список машин</button>
           </div>
-          <button id="open-editor" class="ghost" type="button">Список машин</button>
-        </div>
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Госномер</th>
-                <th>Авто / водитель</th>
-                <th>Неоплачено</th>
-                <th>Сумма</th>
-                <th>Скидка</th>
-                <th>Статус</th>
-              </tr>
-            </thead>
-            <tbody id="fleet-body">
-              <tr><td colspan="6">Загрузка…</td></tr>
-            </tbody>
-          </table>
-        </div>
-      </section>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Госномер</th>
+                  <th>Авто / водитель</th>
+                  <th>Неоплачено</th>
+                  <th>Сумма</th>
+                  <th>Скидка</th>
+                  <th>Статус</th>
+                </tr>
+              </thead>
+              <tbody id="fleet-body">
+                <tr><td colspan="6">Загрузка…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
 
-      <section class="split">
-        <article class="panel" id="detail">
-          <h2>Постановления</h2>
-          <p class="muted">Выберите машину в таблице, чтобы увидеть штрафы.</p>
-        </article>
-        <article class="panel">
-          <h2>Журнал проверок</h2>
-          <ol id="history" class="history"></ol>
-        </article>
+        <aside class="side">
+          <article class="panel" id="detail">
+            <h2>Постановления</h2>
+            <p class="muted">Выберите машину в таблице, чтобы увидеть штрафы.</p>
+          </article>
+          <article class="panel">
+            <h2>Журнал проверок</h2>
+            <ol id="history" class="history"></ol>
+          </article>
+        </aside>
       </section>
     </main>
 

@@ -4,6 +4,7 @@ const detailEl = document.querySelector("#detail");
 const historyEl = document.querySelector("#history");
 const nextEl = document.querySelector("#next-check");
 const runBtn = document.querySelector("#run-check");
+const checkStatus = document.querySelector("#check-status");
 const editor = document.querySelector("#editor");
 const editorBody = document.querySelector("#editor-body");
 const editorError = document.querySelector("#editor-error");
@@ -147,6 +148,9 @@ function render(data) {
   renderCountdown(data);
   runBtn.disabled = data.checking;
   runBtn.textContent = data.checking ? "Идёт проверка…" : "Проверить сейчас";
+  if (data.lastCheck && !data.checking) {
+    checkStatus.textContent = `Последняя: ${when(data.lastCheck.finishedAt, data.timezone)}`;
+  }
 }
 
 async function refresh() {
@@ -210,12 +214,16 @@ document.querySelectorAll(".chip").forEach((chip) => {
 
 runBtn.addEventListener("click", async () => {
   runBtn.disabled = true;
+  runBtn.textContent = "Идёт проверка…";
+  checkStatus.textContent = "Опрашиваю 30 машин…";
   try {
-    await api("/api/check", { method: "POST" });
+    const result = await api("/api/check", { method: "POST" });
     await refresh();
+    checkStatus.textContent = `Готово: новых ${result.appeared}, ошибок ${result.errors}`;
   } catch (error) {
     runBtn.disabled = false;
-    alert(error.message);
+    runBtn.textContent = "Проверить сейчас";
+    checkStatus.textContent = error.message;
   }
 });
 
