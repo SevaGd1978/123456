@@ -1,0 +1,16 @@
+{
+  "name": "fleet-fines-monitor",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Ежедневная автоматическая проверка штрафов ГИБДД для автопарка",
+  "type": "module",
+  "scripts": {
+    "start": "node src/index.js",
+    "check": "node src/cli.js",
+    "dev": "node --watch src/index.js",
+    "test": "node --test ./test/*.test.js"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

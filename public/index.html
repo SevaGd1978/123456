@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Ежедневная проверка штрафов ГИБДД для автопарка" />
+    <title>Смена 20:00 — штрафы автопарка</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <header class="top">
+      <div class="brand">
+        <span class="lamp" aria-hidden="true"></span>
+        <div>
+          <strong>Смена 20:00</strong>
+          <small>Проверка штрафов ГИБДД · 30 машин</small>
+        </div>
+      </div>
+      <div class="top-meta">
+        <div>
+          <span class="kicker">Следующая проверка</span>
+          <b id="next-check">—</b>
+        </div>
+        <button id="run-check" class="primary" type="button">Проверить сейчас</button>
+      </div>
+    </header>
+
+    <main>
+      <section class="stats" id="stats"></section>
+
+      <section class="board">
+        <div class="board-head">
+          <h1>Автопарк</h1>
+          <div class="filters" role="tablist">
+            <button class="chip active" data-filter="all" type="button">Все</button>
+            <button class="chip" data-filter="unpaid" type="button">Неоплаченные</button>
+            <button class="chip" data-filter="errors" type="button">Ошибки</button>
+          </div>
+          <button id="open-editor" class="ghost" type="button">Список машин</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Госномер</th>
+                <th>Авто / водитель</th>
+                <th>Неоплачено</th>
+                <th>Сумма</th>
+                <th>Скидка</th>
+                <th>Статус</th>
+              </tr>
+            </thead>
+            <tbody id="fleet-body">
+              <tr><td colspan="6">Загрузка…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="split">
+        <article class="panel" id="detail">
+          <h2>Постановления</h2>
+          <p class="muted">Выберите машину в таблице, чтобы увидеть штрафы.</p>
+        </article>
+        <article class="panel">
+          <h2>Журнал проверок</h2>
+          <ol id="history" class="history"></ol>
+        </article>
+      </section>
+    </main>
+
+    <dialog id="editor">
+      <form id="editor-form" method="dialog">
+        <header>
+          <h2>Список автомобилей</h2>
+          <p>До 30 машин в смене. Для проверки нужны госномер и номер СТС.</p>
+        </header>
+        <div class="editor-table-wrap">
+          <table class="editor-table">
+            <thead>
+              <tr>
+                <th></th>
+                <th>Госномер</th>
+                <th>СТС</th>
+                <th>Модель</th>
+                <th>Водитель / подразделение</th>
+              </tr>
+            </thead>
+            <tbody id="editor-body"></tbody>
+          </table>
+        </div>
+        <footer>
+          <button id="add-vehicle" class="ghost" type="button">Добавить машину</button>
+          <span id="editor-error" class="error"></span>
+          <button value="cancel" type="submit" class="ghost">Закрыть</button>
+          <button id="save-vehicles" class="primary" type="button">Сохранить</button>
+        </footer>
+      </form>
+    </dialog>
+
+    <script type="module" src="/app.js"></script>
+  </body>
+</html>
