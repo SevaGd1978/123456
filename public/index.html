@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="АвтоСлед — проверка автомобиля по открытым источникам"
+    />
+    <title>АвтоСлед — проверка автомобиля</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <a class="brand" href="/" aria-label="АвтоСлед — на главную">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 32 32">
+            <path d="M5 21.5h22M8 21l2.2-6.1a3 3 0 0 1 2.8-2h6a3 3 0 0 1 2.8 2L24 21M9 21v3m14-3v3M11.5 18h.1m8.8 0h.1" />
+          </svg>
+        </span>
+        <span>АвтоСлед</span>
+      </a>
+      <nav aria-label="Основная навигация">
+        <a href="#sources">Источники</a>
+        <a href="#safety">О сервисе</a>
+      </nav>
+      <span class="open-data-badge"><i></i> Открытые данные</span>
+    </header>
+
+    <main>
+      <section class="hero">
+        <div class="eyebrow"><span>01</span> Проверка автомобиля</div>
+        <h1>Узнайте историю.<br /><em>Проверьте источник.</em></h1>
+        <p class="lead">
+          Ищем опубликованные сведения об автомобиле и владельце-организации.
+          Без закрытых баз и персональных данных.
+        </p>
+
+        <div class="search-card">
+          <div class="tabs" role="tablist" aria-label="Тип поиска">
+            <button class="tab active" id="plate-tab" role="tab" aria-selected="true" data-mode="plate">
+              Госномер
+            </button>
+            <button class="tab" id="vin-tab" role="tab" aria-selected="false" data-mode="vin">
+              VIN
+            </button>
+          </div>
+
+          <form id="search-form" novalidate>
+            <label for="query" id="query-label">Государственный номер</label>
+            <div class="search-row">
+              <div class="input-wrap">
+                <input
+                  id="query"
+                  name="query"
+                  type="text"
+                  placeholder="А 001 АА 77"
+                  autocomplete="off"
+                  maxlength="17"
+                  aria-describedby="input-hint"
+                />
+                <span class="country-tag" id="country-tag">RUS</span>
+              </div>
+              <button class="primary-button" type="submit">
+                Найти
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="m9 18 6-6-6-6" />
+                </svg>
+              </button>
+            </div>
+            <div class="form-meta">
+              <span id="input-hint">Например: А001АА77</span>
+              <span class="privacy-note">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10V8a5 5 0 0 1 10 0v2m-11 0h12v10H6z" /></svg>
+                Запросы не сохраняются
+              </span>
+            </div>
+          </form>
+        </div>
+
+        <div id="status" class="status" aria-live="polite"></div>
+        <section id="result" class="result-panel" hidden aria-live="polite"></section>
+      </section>
+
+      <section class="facts" id="sources">
+        <article>
+          <span class="fact-number">01</span>
+          <div>
+            <h2>Только открытые источники</h2>
+            <p>Каждый найденный факт сопровождается названием источника и датой публикации.</p>
+          </div>
+        </article>
+        <article>
+          <span class="fact-number">02</span>
+          <div>
+            <h2>Без персональных данных</h2>
+            <p>Не показываем ФИО, адреса и контакты владельцев — частных лиц.</p>
+          </div>
+        </article>
+        <article>
+          <span class="fact-number">03</span>
+          <div>
+            <h2>Проверяемые результаты</h2>
+            <p>VIN расшифровывается через официальный открытый API NHTSA.</p>
+          </div>
+        </article>
+      </section>
+
+      <section class="how-it-works" id="safety">
+        <div>
+          <div class="eyebrow"><span>02</span> Как это работает</div>
+          <h2>Данные, которым<br />можно <em>доверять</em></h2>
+        </div>
+        <ol>
+          <li><span>1</span><div><strong>Вы вводите номер или VIN</strong><p>Мы нормализуем запрос и ищем точное совпадение.</p></div></li>
+          <li><span>2</span><div><strong>Проверяем открытые наборы</strong><p>Технические данные и публичные записи организаций.</p></div></li>
+          <li><span>3</span><div><strong>Показываем источник</strong><p>Вы сами оцениваете актуальность и достоверность.</p></div></li>
+        </ol>
+      </section>
+    </main>
+
+    <footer>
+      <a class="brand footer-brand" href="/">АвтоСлед</a>
+      <p>Информационный сервис. Результат не является официальной справкой.</p>
+      <span>© 2026</span>
+    </footer>
+
+    <script type="module" src="/app.js"></script>
+  </body>
+</html>
