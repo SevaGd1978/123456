@@ -60,18 +60,32 @@ describe("free fines APIs", () => {
     assert.match(calls[0], /key=test-key/);
   });
 
-  it("surfaces an invalid Assist key", async () => {
-    const provider = createAssistProvider({
-      key: "bad",
-      timeoutMs: 5000,
-      fetchImpl: async () =>
-        new Response(JSON.stringify({ error: "Invalid access key", error_code: 40301 }), {
-          status: 403,
-          headers: { "Content-Type": "application/json" },
-        }),
+    it("returns an empty list when Assist finds no unpaid fines", async () => {
+      const provider = createAssistProvider({
+        key: "test-key",
+        timeoutMs: 5000,
+        fetchImpl: async () =>
+          new Response(JSON.stringify({ success: 1 }), {
+            status: 200,
+            headers: { "Content-Type": "application/json" },
+          }),
+      });
+      const fines = await provider.checkVehicle(vehicle);
+      assert.deepEqual(fines, []);
     });
-    await assert.rejects(() => provider.checkVehicle(vehicle), /Invalid access key/);
-  });
+
+    it("surfaces an invalid Assist key", async () => {
+      const provider = createAssistProvider({
+        key: "bad",
+        timeoutMs: 5000,
+        fetchImpl: async () =>
+          new Response(JSON.stringify({ error: "Invalid access key", error_code: 40301 }), {
+            status: 403,
+            headers: { "Content-Type": "application/json" },
+          }),
+      });
+      await assert.rejects(() => provider.checkVehicle(vehicle), /Invalid access key/);
+    });
 
   it("maps API-CLOUD rez[] payload", async () => {
     const provider = createCloudProvider({

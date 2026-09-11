@@ -155,6 +155,7 @@ async function renderDetail(id) {
     </div>
     <p class="muted">${escapeHtml(vehicle.title || "")} · ${escapeHtml(vehicle.driver || "")} · СТС ${escapeHtml(vehicle.sts)}</p>
     ${vehicle.enabled === false ? `<p class="muted">Машина выключена из вечерней проверки.</p>` : ""}
+    <p><button type="button" class="ghost" data-action="check" data-id="${escapeHtml(vehicle.id)}">Проверить штрафы</button></p>
     ${vehicle.snapshot?.error ? `<p class="error">${escapeHtml(vehicle.snapshot.error)}</p>` : ""}
     ${unpaid.length ? unpaid.map((fine) => `
       <div class="fine">
@@ -281,6 +282,26 @@ async function removeVehicle(id, label) {
   return true;
 }
 
+async function checkVehicles({ ids, label } = {}) {
+  runBtn.disabled = true;
+  runBtn.textContent = "Идёт проверка…";
+  checkStatus.textContent = label || "Опрашиваю автопарк…";
+  try {
+    const result = await api("/api/check", {
+      method: "POST",
+      body: JSON.stringify(ids ? { ids } : {}),
+    });
+    await refresh();
+    checkStatus.textContent = `Готово: машин ${result.vehiclesChecked}, новых ${result.appeared}, ошибок ${result.errors}`;
+    return result;
+  } catch (error) {
+    runBtn.disabled = false;
+    runBtn.textContent = "Проверить сейчас";
+    checkStatus.textContent = error.message;
+    throw error;
+  }
+}
+
 bodyEl.addEventListener("click", async (event) => {
   const action = event.target.closest("[data-action]");
   if (action) {
@@ -291,14 +312,26 @@ bodyEl.addEventListener("click", async (event) => {
       await openVehicleForm(id);
       return;
     }
-    if (action.dataset.action === "delete") {
-      try {
-        await removeVehicle(id);
-      } catch (error) {
-        checkStatus.textContent = error.message;
-      }
-      return;
+  if (action.dataset.action === "delete") {
+    try {
+      await removeVehicle(id);
+    } catch (error) {
+      checkStatus.textContent = error.message;
     }
+    return;
+  }
+  if (action.dataset.action === "check") {
+    const row = vehicleFromDashboard(id);
+    try {
+      await checkVehicles({
+        ids: [id],
+        label: `Проверяю ${row?.displayPlate || "машину"} через API Assist…`,
+      });
+    } catch {
+      /* status already shown */
+    }
+    return;
+  }
   }
 
   const row = event.target.closest("tr[data-id]");
@@ -322,6 +355,18 @@ detailEl.addEventListener("click", async (event) => {
     } catch (error) {
       checkStatus.textContent = error.message;
     }
+    return;
+  }
+  if (action.dataset.action === "check") {
+    const row = vehicleFromDashboard(id);
+    try {
+      await checkVehicles({
+        ids: [id],
+        label: `Проверяю ${row?.displayPlate || "машину"} через API Assist…`,
+      });
+    } catch {
+      /* status already shown */
+    }
   }
 });
 
@@ -334,17 +379,16 @@ document.querySelectorAll(".chip").forEach((chip) => {
 });
 
 runBtn.addEventListener("click", async () => {
-  runBtn.disabled = true;
-  runBtn.textContent = "Идёт проверка…";
-  checkStatus.textContent = "Опрашиваю автопарк…";
+  const count = dashboard?.fleet?.enabled || dashboard?.vehicles?.length || 30;
+  const live = dashboard?.providerInfo?.live;
+  const quotaNote = live
+    ? `Это потратит ${count} запросов API Assist (лимит 200 в месяц). `
+    : "";
+  if (!window.confirm(`${quotaNote}Проверить ${count} машин сейчас?`)) return;
   try {
-    const result = await api("/api/check", { method: "POST" });
-    await refresh();
-    checkStatus.textContent = `Готово: новых ${result.appeared}, ошибок ${result.errors}`;
-  } catch (error) {
-    runBtn.disabled = false;
-    runBtn.textContent = "Проверить сейчас";
-    checkStatus.textContent = error.message;
+    await checkVehicles({ label: `Опрашиваю ${count} машин…` });
+  } catch {
+    /* status already shown */
   }
 });
 

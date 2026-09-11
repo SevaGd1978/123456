@@ -20,11 +20,14 @@ export async function checkFleet({
   vehicles,
   provider,
   config,
+  ids,
   clock = { now: () => new Date(), delay: (fn, wait) => setTimeout(fn, wait) },
 } = {}) {
   const startedAt = clock.now();
   const today = todayInTimeZone(config.timezone, startedAt);
-  const enabled = vehicles.filter((vehicle) => vehicle.enabled);
+  const selected =
+    Array.isArray(ids) && ids.length ? vehicles.filter((vehicle) => ids.includes(vehicle.id)) : vehicles;
+  const enabled = selected.filter((vehicle) => vehicle.enabled);
   const previous = await loadState(config.dataFile);
   const nextVehicles = { ...previous.vehicles };
   const appeared = [];

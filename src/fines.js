@@ -113,6 +113,9 @@ export function normalizeFine(raw, { discount, today = new Date().toISOString().
   };
 
   const withDiscount = discount ? computeDiscount(base, discount, today) : {};
+  if (raw.enable_discount === false) {
+    withDiscount.discountAvailable = false;
+  }
   const fine = { ...base, ...withDiscount };
   fine.key = fine.uin || fallbackKey(fine);
   return fine;

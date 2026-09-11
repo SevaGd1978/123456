@@ -10,7 +10,7 @@ export async function withRetry(task, { attempts, delayMs, clock } = {}) {
       return await task();
     } catch (error) {
       lastError = error;
-      if (tryIndex === attempts) break;
+      if (error.retryable === false || tryIndex === attempts) break;
       await sleep(delayMs * tryIndex, clock);
     }
   }

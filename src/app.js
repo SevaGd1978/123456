@@ -73,6 +73,10 @@ function sendError(response, error) {
     sendJson(response, error.status, { error: error.message });
     return;
   }
+  if (error.status && error.status < 500) {
+    sendJson(response, error.status, { error: error.message });
+    return;
+  }
   if (String(error.message || "").startsWith("Ошибки в списке")) {
     sendJson(response, 400, { error: error.message });
     return;
@@ -122,13 +126,17 @@ export function createApp(context) {
     return loaded;
   }
 
-  async function runCheck() {
-    if (checking) return checking;
+  async function runCheck({ ids } = {}) {
+    if (checking) {
+      const error = new Error("Проверка уже идёт");
+      error.status = 409;
+      throw error;
+    }
 
     checking = (async () => {
       const { vehicles } = await refreshVehicles();
       const provider = createProvider(config, { fetchImpl });
-      const result = await checkFleet({ vehicles, provider, config });
+      const result = await checkFleet({ vehicles, provider, config, ids });
       try {
         await notifyCheck(result, config, { fetchImpl, nextCheck: getNextCheck?.() });
       } catch (error) {
@@ -238,13 +246,38 @@ export function createApp(context) {
         }
 
         if (request.method === "POST" && url.pathname === "/api/check") {
-          const result = await runCheck();
+          const raw = await readBody(request);
+          const payload = raw ? JSON.parse(raw) : {};
+          const ids = Array.isArray(payload.ids)
+            ? payload.ids.map(String)
+            : payload.id
+              ? [String(payload.id)]
+              : undefined;
+          const result = await runCheck({ ids });
           sendJson(response, 200, {
             ok: true,
             appeared: result.appeared.length,
             paid: result.paid.length,
             settled: result.settled.length,
             errors: result.errors.length,
+            vehiclesChecked: result.entry.vehiclesChecked,
+            summary: result.summary,
+            notifyError: result.notifyError || null,
+          });
+          return;
+        }
+
+        const vehicleCheck = /^\/api\/vehicles\/(.+)\/check$/.exec(url.pathname);
+        if (request.method === "POST" && vehicleCheck) {
+          const id = decodeURIComponent(vehicleCheck[1]);
+          const result = await runCheck({ ids: [id] });
+          sendJson(response, 200, {
+            ok: true,
+            appeared: result.appeared.length,
+            paid: result.paid.length,
+            settled: result.settled.length,
+            errors: result.errors.length,
+            vehiclesChecked: result.entry.vehiclesChecked,
             summary: result.summary,
             notifyError: result.notifyError || null,
           });

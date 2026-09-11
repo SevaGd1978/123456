@@ -51,5 +51,14 @@ describe("fleet check", () => {
       clock: { now: () => new Date("2026-09-10T17:05:00Z"), delay: (fn) => fn() },
     });
     assert.equal(second.appeared.length, 0);
+
+    const one = await checkFleet({
+      vehicles,
+      provider: createDemoProvider({ today: "2026-09-10" }),
+      config,
+      ids: [vehicles[0].id],
+      clock: { now: () => new Date("2026-09-10T17:10:00Z"), delay: (fn) => fn() },
+    });
+    assert.equal(one.entry.vehiclesChecked, 1);
   });
 });
