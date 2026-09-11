@@ -25,9 +25,11 @@ export async function checkFleet({
 } = {}) {
   const startedAt = clock.now();
   const today = todayInTimeZone(config.timezone, startedAt);
-  const selected =
-    Array.isArray(ids) && ids.length ? vehicles.filter((vehicle) => ids.includes(vehicle.id)) : vehicles;
-  const enabled = selected.filter((vehicle) => vehicle.enabled);
+  const scoped = Array.isArray(ids) && ids.length;
+  const selected = scoped
+    ? vehicles.filter((vehicle) => ids.includes(vehicle.id))
+    : vehicles.filter((vehicle) => vehicle.enabled);
+  const enabled = selected;
   const previous = await loadState(config.dataFile);
   const nextVehicles = { ...previous.vehicles };
   const appeared = [];
