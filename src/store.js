@@ -53,3 +53,32 @@ export function pushHistory(state, entry, limit) {
   const history = [entry, ...(state.history || [])].slice(0, limit);
   return { ...state, lastCheck: entry, history };
 }
+
+export async function forgetVehicle(file, id) {
+  const state = await loadState(file);
+  if (!state.vehicles[id]) return state;
+  const vehicles = { ...state.vehicles };
+  delete vehicles[id];
+  return saveState(file, { ...state, vehicles });
+}
+
+export async function syncVehicleRecord(file, { fromId, vehicle }) {
+  const state = await loadState(file);
+  const toId = vehicle.id;
+  const current = state.vehicles[fromId] || state.vehicles[toId];
+  if (!current) return state;
+
+  const vehicles = { ...state.vehicles };
+  if (fromId && fromId !== toId) delete vehicles[fromId];
+  vehicles[toId] = {
+    ...current,
+    id: vehicle.id,
+    plate: vehicle.plate,
+    displayPlate: vehicle.displayPlate,
+    sts: vehicle.sts,
+    title: vehicle.title,
+    driver: vehicle.driver,
+    enabled: vehicle.enabled,
+  };
+  return saveState(file, { ...state, vehicles });
+}

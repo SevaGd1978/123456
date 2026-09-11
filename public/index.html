@@ -39,7 +39,8 @@
               <button class="chip" data-filter="errors" type="button">Ошибки</button>
             </div>
             <button id="open-api-help" class="ghost" type="button">Платный API</button>
-            <button id="open-editor" class="ghost" type="button">Список машин</button>
+            <button id="add-vehicle-main" class="ghost" type="button">Добавить машину</button>
+            <button id="open-editor" class="ghost" type="button">Редактировать автопарк</button>
           </div>
           <div class="table-wrap">
             <table>
@@ -51,10 +52,11 @@
                   <th>Сумма</th>
                   <th>Скидка</th>
                   <th>Статус</th>
+                  <th></th>
                 </tr>
               </thead>
               <tbody id="fleet-body">
-                <tr><td colspan="6">Загрузка…</td></tr>
+                <tr><td colspan="7">Загрузка…</td></tr>
               </tbody>
             </table>
           </div>
@@ -113,7 +115,7 @@ ASSIST_API_KEY=ваш_ключ</pre>
       <form id="editor-form" method="dialog">
         <header>
           <h2>Список автомобилей</h2>
-          <p>До 30 машин в смене. Для проверки нужны госномер и номер СТС.</p>
+          <p>До 30 машин в смене. Можно править строки, добавлять и удалять. Госномер и СТС нужны для проверки.</p>
         </header>
         <div class="editor-table-wrap">
           <table class="editor-table">
@@ -124,6 +126,7 @@ ASSIST_API_KEY=ваш_ключ</pre>
                 <th>СТС</th>
                 <th>Модель</th>
                 <th>Водитель / подразделение</th>
+                <th></th>
               </tr>
             </thead>
             <tbody id="editor-body"></tbody>
@@ -134,6 +137,40 @@ ASSIST_API_KEY=ваш_ключ</pre>
           <span id="editor-error" class="error"></span>
           <button value="cancel" type="submit" class="ghost">Закрыть</button>
           <button id="save-vehicles" class="primary" type="button">Сохранить</button>
+        </footer>
+      </form>
+    </dialog>
+
+    <dialog id="vehicle-dialog">
+      <form id="vehicle-form">
+        <header>
+          <h2 id="vehicle-dialog-title">Машина</h2>
+          <p>Для проверки нужны госномер и СТС. История постановлений привязана к записи: номер можно поменять без потери журнала.</p>
+        </header>
+        <div class="vehicle-form-fields">
+          <input type="hidden" name="id" />
+          <label>Госномер
+            <input type="text" name="plate" required maxlength="16" placeholder="А 001 АА 77" autocomplete="off" />
+          </label>
+          <label>СТС
+            <input type="text" name="sts" required maxlength="16" placeholder="77АА123456" autocomplete="off" />
+          </label>
+          <label>Модель / название
+            <input type="text" name="title" maxlength="80" placeholder="Газель Next" />
+          </label>
+          <label>Водитель / подразделение
+            <input type="text" name="driver" maxlength="80" placeholder="Смена А" />
+          </label>
+          <label class="check">
+            <input type="checkbox" name="enabled" checked />
+            Участвует в вечерней проверке
+          </label>
+        </div>
+        <p id="vehicle-form-error" class="error"></p>
+        <footer>
+          <button type="button" class="ghost danger" id="vehicle-form-delete" hidden>Удалить</button>
+          <button type="button" class="ghost" id="vehicle-form-cancel">Отмена</button>
+          <button type="submit" class="primary">Сохранить</button>
         </footer>
       </form>
     </dialog>

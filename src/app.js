@@ -6,8 +6,8 @@ import { checkFleet } from "./checker.js";
 import { buildDashboard } from "./dashboard.js";
 import { notifyCheck } from "./notify.js";
 import { createProvider } from "./providers/index.js";
-import { loadState } from "./store.js";
-import { saveVehicles } from "./vehicles-file.js";
+import { forgetVehicle, loadState, syncVehicleRecord } from "./store.js";
+import { addVehicle, deleteVehicle, FleetError, saveVehicles, updateVehicle } from "./vehicles-file.js";
 
 const mimeTypes = {
   ".css": "text/css; charset=utf-8",
@@ -52,6 +52,33 @@ function authorize(request, config) {
   const header = request.headers.authorization || "";
   const token = header.startsWith("Bearer ") ? header.slice(7) : "";
   return token === config.apiToken;
+}
+
+function vehicleIdFromPath(pathname) {
+  const rest = pathname.slice("/api/vehicles/".length);
+  if (!rest) return "";
+  try {
+    return decodeURIComponent(rest);
+  } catch {
+    return rest;
+  }
+}
+
+function sendError(response, error) {
+  if (error instanceof SyntaxError) {
+    sendJson(response, 400, { error: "Некорректный JSON" });
+    return;
+  }
+  if (error instanceof FleetError) {
+    sendJson(response, error.status, { error: error.message });
+    return;
+  }
+  if (String(error.message || "").startsWith("Ошибки в списке")) {
+    sendJson(response, 400, { error: error.message });
+    return;
+  }
+  console.error(error);
+  sendJson(response, 500, { error: error.message || "Внутренняя ошибка сервера" });
 }
 
 async function serveStatic(pathname, response) {
@@ -139,7 +166,7 @@ export function createApp(context) {
         }
 
         if (request.method === "GET" && url.pathname.startsWith("/api/vehicles/")) {
-          const id = decodeURIComponent(url.pathname.slice("/api/vehicles/".length));
+          const id = vehicleIdFromPath(url.pathname);
           if (!vehiclesCache.length) await refreshVehicles();
           const vehicle = vehiclesCache.find((item) => item.id === id);
           if (!vehicle) {
@@ -172,6 +199,44 @@ export function createApp(context) {
           return;
         }
 
+        if (request.method === "POST" && url.pathname === "/api/vehicles") {
+          const payload = JSON.parse((await readBody(request)) || "{}");
+          const loaded = await refreshVehicles();
+          const saved = await addVehicle(config.vehiclesFile, loaded.vehicles, payload);
+          vehiclesCache = saved.vehicles;
+          sendJson(response, 201, saved);
+          return;
+        }
+
+        if (request.method === "PATCH" && url.pathname.startsWith("/api/vehicles/")) {
+          const id = vehicleIdFromPath(url.pathname);
+          const payload = JSON.parse((await readBody(request)) || "{}");
+          const loaded = await refreshVehicles();
+          if (!id) {
+            sendJson(response, 404, { error: "Автомобиль не найден" });
+            return;
+          }
+          const saved = await updateVehicle(config.vehiclesFile, loaded.vehicles, id, payload);
+          vehiclesCache = saved.vehicles;
+          await syncVehicleRecord(config.dataFile, { fromId: saved.previousId, vehicle: saved.vehicle });
+          sendJson(response, 200, saved);
+          return;
+        }
+
+        if (request.method === "DELETE" && url.pathname.startsWith("/api/vehicles/")) {
+          const id = vehicleIdFromPath(url.pathname);
+          if (!id) {
+            sendJson(response, 404, { error: "Автомобиль не найден" });
+            return;
+          }
+          const loaded = await refreshVehicles();
+          const saved = await deleteVehicle(config.vehiclesFile, loaded.vehicles, id);
+          vehiclesCache = saved.vehicles;
+          await forgetVehicle(config.dataFile, id);
+          sendJson(response, 200, saved);
+          return;
+        }
+
         if (request.method === "POST" && url.pathname === "/api/check") {
           const result = await runCheck();
           sendJson(response, 200, {
@@ -197,12 +262,7 @@ export function createApp(context) {
 
       await serveStatic(url.pathname, response);
     } catch (error) {
-      if (error instanceof SyntaxError) {
-        sendJson(response, 400, { error: "Некорректный JSON" });
-        return;
-      }
-      console.error(error);
-      sendJson(response, 500, { error: error.message || "Внутренняя ошибка сервера" });
+      sendError(response, error);
     }
   });
 
