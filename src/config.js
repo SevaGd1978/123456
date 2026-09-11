@@ -39,9 +39,11 @@ export function loadConfig(env = process.env) {
     env.FINES_PROVIDER ||
     (env.ASSIST_API_KEY ? "assist" : env.CLOUD_API_TOKEN ? "cloud" : "demo");
   const remote = provider !== "demo";
+  const onAmvera = Boolean(env.AMVERA) || existsSync("/data");
+  const defaultPort = onAmvera ? 80 : 3000;
 
   return {
-    port: readNumber(env.PORT, 3000, { min: 1, max: 65535 }),
+    port: readNumber(env.PORT, defaultPort, { min: 1, max: 65535 }),
     host: env.HOST || "0.0.0.0",
     timezone: env.TIMEZONE || "Europe/Moscow",
     checkTime,
@@ -51,8 +53,10 @@ export function loadConfig(env = process.env) {
     requestDelayMs: readNumber(env.REQUEST_DELAY_MS, remote ? 1500 : 0, { min: 0, max: 60_000 }),
     requestTimeoutMs: readNumber(env.REQUEST_TIMEOUT_MS, 20_000, { min: 1000, max: 120_000 }),
     retryAttempts: readNumber(env.RETRY_ATTEMPTS, 3, { min: 1, max: 10 }),
-    vehiclesFile: resolvePath(env.VEHICLES_FILE || "config/vehicles.json"),
-    dataFile: resolvePath(env.DATA_FILE || "data/state.json"),
+    vehiclesFile: resolvePath(
+      env.VEHICLES_FILE || (onAmvera ? "/data/vehicles.json" : "config/vehicles.json"),
+    ),
+    dataFile: resolvePath(env.DATA_FILE || (onAmvera ? "/data/state.json" : "data/state.json")),
     historyLimit: readNumber(env.HISTORY_LIMIT, 60, { min: 1, max: 1000 }),
     apiToken: env.API_TOKEN || "",
     discount: {

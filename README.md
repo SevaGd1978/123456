@@ -121,6 +121,20 @@ npm run check
 - `WEBHOOK_URL` — POST JSON на ваш URL;
 - `API_TOKEN` — если задан, все `/api/*` требуют `Authorization: Bearer …`.
 
+## Деплой на Amvera Cloud
+
+В корне лежит `amvera.yml` (Node 20, `npm start`, порт 80, диск `/data`).
+
+1. Создайте приложение в [cloud.amvera.ru](https://cloud.amvera.ru).
+2. Привяжите репозиторий и отправьте код:
+
+```bash
+git remote add amvera https://git.amvera.ru/<логин>/<имя-проекта>
+git push amvera HEAD:master
+```
+
+Логин и пароль — от кабинета Amvera. После сборки панель откроется по адресу вида `https://<проект>-<логин>.amvera.io`.
+
 ## Тесты
 
 ```bash
