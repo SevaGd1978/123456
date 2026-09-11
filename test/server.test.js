@@ -51,6 +51,7 @@ describe("http api", () => {
     assert.match(html, /Смена 20:00/);
     assert.match(html, /Редактировать автопарк/);
     assert.match(html, /Добавить машину/);
+    assert.match(html, /только вручную/);
     const help = await fetch(baseUrl);
     assert.match(await help.text(), /CLOUD_API_TOKEN/);
   });
@@ -65,6 +66,7 @@ describe("http api", () => {
     assert.equal(dashboard.fleet.vehicles, 30);
     assert.equal(dashboard.vehicles.length, 30);
     assert.equal(dashboard.checking, false);
+    assert.equal(dashboard.scheduleEnabled, false);
   });
 
   it("adds, edits and deletes a vehicle while keeping fine history on plate change", async () => {

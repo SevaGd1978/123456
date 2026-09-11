@@ -48,6 +48,7 @@ export function loadConfig(env = process.env) {
     timezone: env.TIMEZONE || "Europe/Moscow",
     checkTime,
     checkOnStart: readBoolean(env.CHECK_ON_START, false),
+    scheduleEnabled: readBoolean(env.SCHEDULE_CHECK, false),
     provider,
     concurrency: readNumber(env.CHECK_CONCURRENCY, remote ? 2 : 8, { min: 1, max: 10 }),
     requestDelayMs: readNumber(env.REQUEST_DELAY_MS, remote ? 1500 : 0, { min: 0, max: 60_000 }),

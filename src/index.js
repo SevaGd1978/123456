@@ -27,22 +27,25 @@ const { vehicles, warnings } = await loadFleet();
 for (const warning of warnings) console.warn(warning);
 console.log(`Автопарк: ${vehicles.length} машин · провайдер: ${config.provider}`);
 
-const schedule = scheduleDailyCheck({
-  config,
-  run: () => app.runCheck(),
-  onTick: async (value) => {
-    nextCheck = value;
-    const state = await loadState(config.dataFile);
-    await saveState(config.dataFile, { ...state, nextCheckAt: value.toISOString() });
-    console.log(`Следующая проверка: ${value.toISOString()}`);
-  },
-});
-nextCheck = schedule.next;
+if (config.scheduleEnabled) {
+  const schedule = scheduleDailyCheck({
+    config,
+    run: () => app.runCheck(),
+    onTick: async (value) => {
+      nextCheck = value;
+      const state = await loadState(config.dataFile);
+      await saveState(config.dataFile, { ...state, nextCheckAt: value.toISOString() });
+      console.log(`Следующая проверка: ${value.toISOString()}`);
+    },
+  });
+  nextCheck = schedule.next;
+} else {
+  console.log("Автопроверка выключена: штрафы только по кнопке в панели");
+}
 
 app.server.listen(config.port, config.host, async () => {
   console.log(`Панель штрафов: http://localhost:${config.port}`);
-  const state = await loadState(config.dataFile);
-  if (config.checkOnStart || (config.provider === "demo" && !state.lastCheck)) {
+  if (config.checkOnStart) {
     console.log("Запускаю стартовую проверку…");
     await app.runCheck();
   }

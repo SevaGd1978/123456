@@ -123,8 +123,8 @@ function renderHistory(data) {
 }
 
 function renderCountdown(data) {
-  if (!data.nextCheckAt) {
-    nextEl.textContent = `${data.checkTime} ${data.timezone}`;
+  if (!data.scheduleEnabled || !data.nextCheckAt) {
+    nextEl.textContent = "только вручную";
     return;
   }
   const diff = new Date(data.nextCheckAt).getTime() - Date.now();
@@ -154,7 +154,7 @@ async function renderDetail(id) {
       </div>
     </div>
     <p class="muted">${escapeHtml(vehicle.title || "")} · ${escapeHtml(vehicle.driver || "")} · СТС ${escapeHtml(vehicle.sts)}</p>
-    ${vehicle.enabled === false ? `<p class="muted">Машина выключена из вечерней проверки.</p>` : ""}
+    ${vehicle.enabled === false ? `<p class="muted">Машина выключена из проверки по кнопке «Проверить сейчас».</p>` : ""}
     <p><button type="button" class="ghost" data-action="check" data-id="${escapeHtml(vehicle.id)}">Проверить штрафы</button></p>
     ${vehicle.snapshot?.error ? `<p class="error">${escapeHtml(vehicle.snapshot.error)}</p>` : ""}
     ${unpaid.length ? unpaid.map((fine) => `

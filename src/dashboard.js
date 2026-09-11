@@ -66,6 +66,7 @@ export function buildDashboard({ vehicles, state, config, nextCheck, checking })
     checkTime: `${String(config.checkTime.hour).padStart(2, "0")}:${String(config.checkTime.minute).padStart(2, "0")}`,
     discount: config.discount,
     nextCheckAt: nextCheck ? nextCheck.toISOString() : null,
+    scheduleEnabled: Boolean(config.scheduleEnabled),
     lastCheck: state.lastCheck,
     providerInfo: describeProvider(config),
     fleet,
