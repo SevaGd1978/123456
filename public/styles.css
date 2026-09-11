@@ -171,9 +171,9 @@ dialog footer { display: flex; gap: 10px; align-items: center; border-top: 1px s
   padding: 8px;
 }
 .editor-table tbody tr { cursor: default; }
-.row-actions { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
 .detail-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
-.detail-head h2 { margin: 0; text-transform: none; letter-spacing: .08em; font-size: 22px; color: var(--text); font-family: var(--mono); }
+.detail-head h2 { margin: 0; text-transform: none; letter-spacing: .08em; font-size: 22px; color: var(--text); font-family: var(--mono); min-width: 0; flex: 1; }
+.row-actions { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; flex-shrink: 0; }
 #vehicle-dialog { width: min(520px, calc(100vw - 32px)); }
 .vehicle-form-fields { display: grid; gap: 12px; padding: 0 18px 8px; }
 .vehicle-form-fields label { display: grid; gap: 6px; font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; }
