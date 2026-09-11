@@ -1,0 +1,242 @@
+[
+  {
+    "id": "car-01",
+    "plate": "А101КН77",
+    "sts": "77АМ100001",
+    "title": "Toyota Camry",
+    "driver": "Иванов А.С.",
+    "enabled": true
+  },
+  {
+    "id": "car-02",
+    "plate": "В108МО99",
+    "sts": "77ВН100038",
+    "title": "Hyundai Solaris",
+    "driver": "Петрова Н.В.",
+    "enabled": true
+  },
+  {
+    "id": "car-03",
+    "plate": "Е115НР197",
+    "sts": "77ЕО100075",
+    "title": "Kia Rio",
+    "driver": "Сидоров И.П.",
+    "enabled": true
+  },
+  {
+    "id": "car-04",
+    "plate": "К122ОС777",
+    "sts": "77КР100112",
+    "title": "Volkswagen Polo",
+    "driver": "Кузнецов Д.А.",
+    "enabled": true
+  },
+  {
+    "id": "car-05",
+    "plate": "М129РТ97",
+    "sts": "77МС100149",
+    "title": "Skoda Octavia",
+    "driver": "Смирнова Е.Л.",
+    "enabled": true
+  },
+  {
+    "id": "car-06",
+    "plate": "Н136СУ177",
+    "sts": "77НТ100186",
+    "title": "Lada Vesta",
+    "driver": "Морозов К.Н.",
+    "enabled": true
+  },
+  {
+    "id": "car-07",
+    "plate": "О143ТХ50",
+    "sts": "77ОУ100223",
+    "title": "Renault Duster",
+    "driver": "Волков П.Р.",
+    "enabled": true
+  },
+  {
+    "id": "car-08",
+    "plate": "Р150УА150",
+    "sts": "77РХ100260",
+    "title": "Nissan Qashqai",
+    "driver": "Новикова О.М.",
+    "enabled": true
+  },
+  {
+    "id": "car-09",
+    "plate": "С157ХВ777",
+    "sts": "77СА100297",
+    "title": "Mazda CX-5",
+    "driver": "Фёдоров С.Г.",
+    "enabled": true
+  },
+  {
+    "id": "car-10",
+    "plate": "Т164АЕ199",
+    "sts": "77ТВ100334",
+    "title": "BMW X3",
+    "driver": "Лебедев А.А.",
+    "enabled": true
+  },
+  {
+    "id": "car-11",
+    "plate": "У171ВК77",
+    "sts": "77УЕ100371",
+    "title": "Mercedes-Benz Sprinter",
+    "driver": "Гараж №1",
+    "enabled": true
+  },
+  {
+    "id": "car-12",
+    "plate": "Х178ЕМ99",
+    "sts": "77ХК100408",
+    "title": "Ford Transit",
+    "driver": "Гараж №1",
+    "enabled": true
+  },
+  {
+    "id": "car-13",
+    "plate": "А185КН197",
+    "sts": "77АМ100445",
+    "title": "ГАЗель NEXT",
+    "driver": "Склад Юг",
+    "enabled": true
+  },
+  {
+    "id": "car-14",
+    "plate": "В192МО777",
+    "sts": "77ВН100482",
+    "title": "КАМАЗ 4308",
+    "driver": "Склад Север",
+    "enabled": true
+  },
+  {
+    "id": "car-15",
+    "plate": "Е199НР97",
+    "sts": "77ЕО100519",
+    "title": "Uaz Patriot",
+    "driver": "Служба выезда",
+    "enabled": true
+  },
+  {
+    "id": "car-16",
+    "plate": "К206ОС177",
+    "sts": "77КР100556",
+    "title": "Toyota Land Cruiser",
+    "driver": "Дирекция",
+    "enabled": true
+  },
+  {
+    "id": "car-17",
+    "plate": "М213РТ50",
+    "sts": "77МС100593",
+    "title": "Hyundai Creta",
+    "driver": "Отдел продаж",
+    "enabled": true
+  },
+  {
+    "id": "car-18",
+    "plate": "Н220СУ150",
+    "sts": "77НТ100630",
+    "title": "Kia Sportage",
+    "driver": "Отдел продаж",
+    "enabled": true
+  },
+  {
+    "id": "car-19",
+    "plate": "О227ТХ777",
+    "sts": "77ОУ100667",
+    "title": "Chery Tiggo 7",
+    "driver": "Маркетинг",
+    "enabled": true
+  },
+  {
+    "id": "car-20",
+    "plate": "Р234УА199",
+    "sts": "77РХ100704",
+    "title": "Haval Jolion",
+    "driver": "HR",
+    "enabled": true
+  },
+  {
+    "id": "car-21",
+    "plate": "С241ХВ77",
+    "sts": "77СА100741",
+    "title": "Geely Coolray",
+    "driver": "Бухгалтерия",
+    "enabled": true
+  },
+  {
+    "id": "car-22",
+    "plate": "Т248АЕ99",
+    "sts": "77ТВ100778",
+    "title": "Lada Largus",
+    "driver": "Логистика",
+    "enabled": true
+  },
+  {
+    "id": "car-23",
+    "plate": "У255ВК197",
+    "sts": "77УЕ100815",
+    "title": "Volkswagen Caravelle",
+    "driver": "Трансфер",
+    "enabled": true
+  },
+  {
+    "id": "car-24",
+    "plate": "Х262ЕМ777",
+    "sts": "77ХК100852",
+    "title": "Peugeot Boxer",
+    "driver": "Сервис",
+    "enabled": true
+  },
+  {
+    "id": "car-25",
+    "plate": "А269КН97",
+    "sts": "77АМ100889",
+    "title": "Citroen Jumper",
+    "driver": "Сервис",
+    "enabled": true
+  },
+  {
+    "id": "car-26",
+    "plate": "В276МО177",
+    "sts": "77ВН100926",
+    "title": "Mitsubishi Outlander",
+    "driver": "Регион Запад",
+    "enabled": true
+  },
+  {
+    "id": "car-27",
+    "plate": "Е283НР50",
+    "sts": "77ЕО100963",
+    "title": "Subaru Forester",
+    "driver": "Регион Восток",
+    "enabled": true
+  },
+  {
+    "id": "car-28",
+    "plate": "К290ОС150",
+    "sts": "77КР101000",
+    "title": "Honda CR-V",
+    "driver": "Регион Юг",
+    "enabled": true
+  },
+  {
+    "id": "car-29",
+    "plate": "М297РТ777",
+    "sts": "77МС101037",
+    "title": "Audi Q5",
+    "driver": "Приёмка",
+    "enabled": true
+  },
+  {
+    "id": "car-30",
+    "plate": "Н304СУ199",
+    "sts": "77НТ101074",
+    "title": "Volvo XC60",
+    "driver": "Охрана труда",
+    "enabled": true
+  }
+]

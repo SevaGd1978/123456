@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Ежедневная проверка штрафов ГИБДД для автопарка" />
+    <title>Смена 20:00 — штрафы автопарка</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <header class="top">
+      <div class="brand">
+        <span class="lamp" aria-hidden="true"></span>
+        <div>
+          <strong>Смена 20:00</strong>
+          <small id="provider-line">Проверка штрафов ГИБДД · 30 машин</small>
+        </div>
+      </div>
+      <div class="top-meta">
+        <div>
+          <span class="kicker">Проверка</span>
+          <b id="next-check">только вручную</b>
+        </div>
+        <button id="run-check" class="primary" type="button">Проверить сейчас</button>
+        <span id="check-status" class="muted"></span>
+      </div>
+    </header>
+
+    <main>
+      <section class="stats" id="stats"></section>
+
+      <section class="workspace">
+        <section class="board">
+          <div class="board-head">
+            <h1>Автопарк</h1>
+            <div class="filters" role="tablist">
+              <button class="chip active" data-filter="all" type="button">Все</button>
+              <button class="chip" data-filter="unpaid" type="button">Неоплаченные</button>
+              <button class="chip" data-filter="errors" type="button">Ошибки</button>
+            </div>
+            <button id="open-api-help" class="ghost" type="button">Платный API</button>
+            <button id="add-vehicle-main" class="ghost" type="button">Добавить машину</button>
+            <button id="open-editor" class="ghost" type="button">Редактировать автопарк</button>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Госномер</th>
+                  <th>Авто / водитель</th>
+                  <th>Неоплачено</th>
+                  <th>Сумма</th>
+                  <th>Скидка</th>
+                  <th>Статус</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="fleet-body">
+                <tr><td colspan="7">Загрузка…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <aside class="side">
+          <article class="panel" id="detail">
+            <h2>Постановления</h2>
+            <p class="muted">Выберите машину в таблице, чтобы увидеть штрафы.</p>
+          </article>
+          <article class="panel">
+            <h2>Журнал проверок</h2>
+            <ol id="history" class="history"></ol>
+          </article>
+        </aside>
+      </section>
+    </main>
+
+    <dialog id="api-help">
+      <form method="dialog" class="help-dialog">
+        <header>
+          <h2>Как подключить платный API</h2>
+          <p>Бесплатных 200 запросов не хватит на 30 машин каждый вечер. Нужно около 900 запросов в месяц.</p>
+        </header>
+        <div class="help-body">
+          <article>
+            <h3>API-CLOUD — для автопарка</h3>
+            <ol>
+              <li>Откройте <a href="https://api-cloud.ru/tarif" target="_blank" rel="noopener noreferrer">тарифы</a> и <a href="https://api-cloud.ru/gibdd" target="_blank" rel="noopener noreferrer">документацию штрафов</a>.</li>
+              <li>Напишите на <a href="mailto:support@api-cloud.ru">support@api-cloud.ru</a>: нужны методы <code>fines</code>, около 900 запросов/мес, цель — мониторинг своего автопарка, реквизиты ООО или ИП и название ЭДО.</li>
+              <li>Дождитесь регистрационного кода (до 7 рабочих дней). Ключ копируется в кабинете.</li>
+              <li>В файле <code>.env</code> укажите:</li>
+            </ol>
+            <pre>FINES_PROVIDER=cloud
+CLOUD_API_TOKEN=ваш_токен</pre>
+            <p class="muted">Ориентир: минимальный платёж 700 ₽/мес при &lt; 2000 запросов плюс оплата успешных запросов. Актуальные цены — на сайте API-CLOUD, это не оферта.</p>
+          </article>
+          <article>
+            <h3>API Assist — платный лимит</h3>
+            <ol>
+              <li>Напишите на <a href="mailto:support@api-assist.com">support@api-assist.com</a>: нужен лимит от 900 запросов/мес.</li>
+              <li>Полученный ключ пропишите так:</li>
+            </ol>
+            <pre>FINES_PROVIDER=assist
+ASSIST_API_KEY=ваш_ключ</pre>
+            <p class="muted">Документация: <a href="https://api-assist.com/api/fines" target="_blank" rel="noopener noreferrer">api-assist.com/api/fines</a>. Цена платного тарифа по запросу.</p>
+          </article>
+        </div>
+        <footer>
+          <button value="close" class="primary">Понятно</button>
+        </footer>
+      </form>
+    </dialog>
+
+    <dialog id="editor">
+      <form id="editor-form" method="dialog">
+        <header>
+          <h2>Список автомобилей</h2>
+          <p>До 30 машин в смене. Можно править строки, добавлять и удалять. Госномер и СТС нужны для проверки.</p>
+        </header>
+        <div class="editor-table-wrap">
+          <table class="editor-table">
+            <thead>
+              <tr>
+                <th></th>
+                <th>Госномер</th>
+                <th>СТС</th>
+                <th>Модель</th>
+                <th>Водитель / подразделение</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="editor-body"></tbody>
+          </table>
+        </div>
+        <footer>
+          <button id="add-vehicle" class="ghost" type="button">Добавить машину</button>
+          <span id="editor-error" class="error"></span>
+          <button value="cancel" type="submit" class="ghost">Закрыть</button>
+          <button id="save-vehicles" class="primary" type="button">Сохранить</button>
+        </footer>
+      </form>
+    </dialog>
+
+    <dialog id="vehicle-dialog">
+      <form id="vehicle-form">
+        <header>
+          <h2 id="vehicle-dialog-title">Машина</h2>
+          <p>Для проверки нужны госномер и СТС. История постановлений привязана к записи: номер можно поменять без потери журнала.</p>
+        </header>
+        <div class="vehicle-form-fields">
+          <input type="hidden" name="id" />
+          <label>Госномер
+            <input type="text" name="plate" required maxlength="16" placeholder="А 001 АА 77" autocomplete="off" />
+          </label>
+          <label>СТС
+            <input type="text" name="sts" required maxlength="16" placeholder="77АА123456" autocomplete="off" />
+          </label>
+          <label>Модель / название
+            <input type="text" name="title" maxlength="80" placeholder="Газель Next" />
+          </label>
+          <label>Водитель / подразделение
+            <input type="text" name="driver" maxlength="80" placeholder="Смена А" />
+          </label>
+          <label class="check">
+            <input type="checkbox" name="enabled" checked />
+            Участвует в проверке штрафов
+          </label>
+        </div>
+        <p id="vehicle-form-error" class="error"></p>
+        <footer>
+          <button type="button" class="ghost danger" id="vehicle-form-delete" hidden>Удалить</button>
+          <button type="button" class="ghost" id="vehicle-form-cancel">Отмена</button>
+          <button type="submit" class="primary">Сохранить</button>
+        </footer>
+      </form>
+    </dialog>
+
+    <script type="module" src="/app.js"></script>
+  </body>
+</html>
