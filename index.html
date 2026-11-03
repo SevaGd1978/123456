@@ -187,6 +187,8 @@ table.doc tr.pick-cur td { background: var(--accent-soft); }
   padding: 10px; overflow: auto; max-height: 78vh;
 }
 .sheetbox svg { display: block; width: 100%; height: auto; max-width: 100%; }
+.sheetbox.stack svg { margin-bottom: 14px; border: 1px solid var(--line); border-radius: 4px; }
+.sheet-tabs { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 10px; }
 
 .specdoc { border-top: 1px dashed var(--line); padding-top: 12px; margin-top: 12px; }
 .specdoc:first-child { border-top: 0; margin-top: 0; padding-top: 0; }
@@ -369,10 +371,11 @@ table.doc tr.pick-cur td { background: var(--accent-soft); }
         <button id="btnPng" class="btn">Скачать PNG</button>
         <button id="btnPrintDrawing" class="btn primary">Печать / PDF</button>
       </div>
+      <div id="drawSheets" class="sheet-tabs"></div>
       <div id="drawPreview" class="sheetbox"></div>
-      <p class="hint">Чертёж формируется по расчётным размерам: 3 вида, размеры, позиции,
-        ведомость параметров, технические требования, основная надпись по форме 1 ГОСТ 2.104.
-        DXF выгружается в миллиметрах 1:1 (слои ОСНОВНАЯ / ТОНКАЯ / ШТРИХОВАЯ / ОСЕВАЯ / РАЗМЕРЫ / ТЕКСТ).
+      <p class="hint">Комплект: лист 1 — общий сборочный чертёж (виды, спецификация, позиции),
+        далее — подробные чертежи каждой детали опоры (виды, размеры, развёртка, отверстия).
+        Основная надпись по форме 1 ГОСТ 2.104. DXF — миллиметры 1:1.
         Обязательно проверьте чертёж перед изготовлением.</p>
     </div>
   </section>
@@ -492,10 +495,11 @@ table.doc tr.pick-cur td { background: var(--accent-soft); }
           заготовки и развёртки.</li>
         <li><b>Стоимость</b>: материалы с коэффициентом раскроя, сварка (по длине швов и катету),
           термическая резка, сверление, антикоррозионное покрытие, сборка, накладные расходы, прибыль, НДС.</li>
-        <li><b>Документы</b>: рабочий чертёж (3 вида, размеры, позиции, техтребования, основная надпись
-          по форме 1 ГОСТ 2.104), спецификация, ведомость материалов, ведомость швов, проверочный расчёт,
+        <li><b>Документы</b>: комплект чертежей — общий сборочный лист и подробные чертежи деталей
+          опоры (виды, размеры, развёртки, отверстия, основная надпись по форме 1 ГОСТ 2.104),
+          спецификация, ведомость материалов, ведомость швов, проверочный расчёт,
           калькуляция, сводная ведомость заказа; выгрузка в SVG, DXF R12, XLSX, CSV, печать/PDF.</li>
-        <li><b>Рабочие чертежи производства из заказа</b>: сборочный чертёж каждой позиции,
+        <li><b>Рабочие чертежи производства из заказа</b>: сборочный чертёж и чертежи деталей каждой позиции,
           раскрой листового проката (MaxRects, зазор реза 5 мм, кромка 10 мм, поворот 90°),
           карты реза полосы / уголка / швеллера / трубы, комплектовочная ведомость деталей
           и метизов с марками «обозначение/позиция». Кнопка на вкладке «Заказ».</li>
@@ -3029,7 +3033,9 @@ table.doc tr.pick-cur td { background: var(--accent-soft); }
   View.prototype.rect = function (x1, y1, x2, y2, w) {
     return this.poly([[x1, y1], [x2, y1], [x2, y2], [x1, y2]], w, true);
   };
-  View.prototype.poly = function (pts, w, close) { return this._add({ t: 'poly', pts: pts, w: w || 'main', close: close !== false }); };
+  View.prototype.poly = function (pts, w, close, fill) {
+    return this._add({ t: 'poly', pts: pts, w: w || 'main', close: close !== false, fill: fill || 'none' });
+  };
   View.prototype.circle = function (cx, cy, r, w) { return this._add({ t: 'circle', c: [cx, cy], r: r, w: w || 'main' }); };
   View.prototype.arc = function (cx, cy, r, a0, a1, w) { return this._add({ t: 'arc', c: [cx, cy], r: r, a0: a0, a1: a1, w: w || 'main' }); };
   View.prototype.axisH = function (x1, x2, y) { return this._add({ t: 'line', a: [x1, y], b: [x2, y], w: 'axis' }); };
@@ -3093,6 +3099,7 @@ table.doc tr.pick-cur td { background: var(--accent-soft); }
     this.views = [];
     this.notes = o.notes || [];
     this.tables = o.tables || [];
+    this.tableLayout = o.tableLayout || 'top';
     this.stamp = o.stamp || {};
     this.data = o.data || {};
   }
@@ -3138,7 +3145,8 @@ table.doc tr.pick-cur td { background: var(--accent-soft); }
         }
         case 'poly': {
           var d = p.pts.map(function (q, i) { var r = P(q); return (i ? 'L' : 'M') + f(r.X) + ' ' + f(r.Y); }).join(' ') + (p.close ? ' Z' : '');
-          fig.push('<path d="' + d + '" fill="none" stroke="#000" ' + lwScale(p.w) + '/>');
+          fig.push('<path d="' + d + '" fill="' + (p.fill && p.fill !== 'none' ? p.fill : 'none') +
+            '" stroke="#000" ' + lwScale(p.w) + '"/>');
           break;
         }
         case 'circle': {
@@ -3368,8 +3376,8 @@ table.doc tr.pick-cur td { background: var(--accent-soft); }
     T(x2 + 7.5, yLMS + 7.4, d.litera || '\u041e1', 3, 'middle');
     T(x2 + 27.5, yLMS + 7.4, d.mass !== undefined ? U.num(d.mass, 2) : '', 3, 'middle');
     T(x2 + 52.5, yLMS + 7.2, d.scale || '1:1', 3, 'middle');
-    T(x2 + 15, yList + 6.4, '1', 2.8, 'middle');
-    T(x2 + 47.5, yList + 6.4, '1', 2.8, 'middle');
+    T(x2 + 15, yList + 6.4, String(d.sheet || 1), 2.8, 'middle');
+    T(x2 + 47.5, yList + 6.4, String(d.sheets || 1), 2.8, 'middle');
     T(x2 + 32.5, yOrg + 5.5, d.org || '', 2.6, 'middle');
     if (d.orgLine2) T(x2 + 32.5, yOrg + 8.4, d.orgLine2, 2.4, 'middle');
     T(x + 2, y + h - 4, d.stampLeft || '', 2.4);
@@ -3565,11 +3573,38 @@ table.doc tr.pick-cur td { background: var(--accent-soft); }
     o = o || {};
     var sheet = SHEETS[o.format || 'A3'] || SHEETS.A3;
     var W = sheet.w, H = sheet.h;
-    /* резерв сверху — по фактической высоте таблиц (с учётом переносов) */
-    var topRes = (dr.tables && dr.tables.length)
-      ? tablesHeight(dr.tables) + 4
-      : (+o.reserveTop || 0);
-    var avail = { x: 22, y: 12 + topRes, w: W - 30, h: H - 12 - topRes - 62 };
+    /* спецификация слева (как на сборочном комплекте) или таблицы сверху */
+    var leftTables = [], topTables = [];
+    if ((dr.tableLayout === 'left' || o.tableLayout === 'left') && dr.tables && dr.tables.length) {
+      leftTables = [dr.tables[0]];
+      topTables = dr.tables.slice(1);
+    } else if (dr.tables && dr.tables.length) {
+      topTables = dr.tables;
+    }
+    var leftW = 0;
+    leftTables.forEach(function (tb) {
+      var tw = 0; tb.cols.forEach(function (c) { tw += c.w; });
+      leftW = Math.max(leftW, tw);
+    });
+    if (leftW) leftW += 8;
+    var topW = 0, topH = 0;
+    topTables.forEach(function (tb) {
+      var L = layoutTable(tb.cols, tb.rows, tb.title);
+      topW = Math.max(topW, L.w);
+      topH += L.h + 6;
+    });
+    /* узкая таблица справа не отнимает всю верхнюю полосу — только колонку */
+    var sideTable = topW > 0 && topW <= 110 && !leftTables.length;
+    var topRes = sideTable ? 0
+      : (topH ? topH
+        : (leftTables.length ? 0 : (+o.reserveTop || 0)));
+    var rightW = sideTable ? topW + 8 : 0;
+    var avail = {
+      x: 22 + leftW,
+      y: 12 + topRes,
+      w: W - 30 - leftW - rightW,
+      h: H - 12 - topRes - 62
+    };
 
     var boxes = dr.views.map(function (v) { return v.bbox(); });
     var exts = dr.views.map(paperExtent);
@@ -3587,7 +3622,9 @@ table.doc tr.pick-cur td { background: var(--accent-soft); }
       var pos = dr.views.map(function () { return { x: 0, y: 0 }; });
       var gap = gapPaper / k;
       for (var i = 1; i < dr.views.length; i++) {
-        if (mode === 'row' || i % 2 === 1) {
+        if (mode === 'col') {
+          pos[i] = { x: 0, y: (occ[i - 1].miny + pos[i - 1].y - gap) - occ[i].maxy };
+        } else if (mode === 'row' || i % 2 === 1) {
           pos[i] = { x: (occ[i - 1].maxx + pos[i - 1].x + gap) - occ[i].minx, y: 0 };
         } else {
           pos[i] = { x: 0, y: (occ[0].miny + pos[0].y - gap) - occ[i].maxy };
@@ -3625,8 +3662,12 @@ table.doc tr.pick-cur td { background: var(--accent-soft); }
       return { mode: mode, k: s2, lay: lay2, bp: boundsPaper(lay2, s2), scale: SCALES[SCALES.length - 1] };
     }
     var best = evaluate('row');
-    var grid = evaluate('grid');
-    if (grid.k > best.k) best = grid;
+    ['grid', 'col'].forEach(function (mode) {
+      var cand = evaluate(mode);
+      if (cand.k > best.k + 1e-9) best = cand;
+      else if (Math.abs(cand.k - best.k) < 1e-9 && cand.bp && best.bp &&
+        cand.bp.w * cand.bp.h < best.bp.w * best.bp.h) best = cand;
+    });
 
     var k = (o.scale && o.scale !== 'auto') ? +o.scale : best.k;
     var scaleInfo = best.scale;
@@ -3723,9 +3764,14 @@ table.doc tr.pick-cur td { background: var(--accent-soft); }
       }
     }
 
-    /* таблицы — сверху справа */
+    /* спецификация — слева, остальные таблицы сверху справа */
+    var ly = 12;
+    leftTables.forEach(function (tb) {
+      var dim = drawTable(svg, 22, ly, tb.cols, tb.rows, tb.title);
+      ly += dim.h + 4;
+    });
     var curY = 12;
-    (dr.tables || []).forEach(function (tb) {
+    topTables.forEach(function (tb) {
       var wsum = 0; tb.cols.forEach(function (c) { wsum += c.w; });
       var dim = drawTable(svg, W - 25 - wsum, curY, tb.cols, tb.rows, tb.title);
       curY += dim.h + 6;
@@ -3733,7 +3779,9 @@ table.doc tr.pick-cur td { background: var(--accent-soft); }
 
     /* основная надпись */
     var stamp = Object.assign({}, dr.stamp, {
-      designation: dr.designation, title: dr.title, mass: dr.mass, scale: scaleInfo[1]
+      designation: dr.designation, title: dr.title, mass: dr.mass, scale: scaleInfo[1],
+      sheet: o.sheet || (dr.stamp && dr.stamp.sheet) || 1,
+      sheets: o.sheets || (dr.stamp && dr.stamp.sheets) || 1
     });
     drawStamp(svg, W - 5 - 185, H - 5 - 55, 185, 55, stamp);
 
@@ -3892,15 +3940,35 @@ table.doc tr.pick-cur td { background: var(--accent-soft); }
     return w.slice(0, mid).join(' ') + '\n' + w.slice(mid).join(' ');
   }
 
+  function specTable(res) {
+    var rows = (res.parts || []).map(function (p) {
+      var des = res.designation + '.' + (p.pos < 10 ? '00' : (p.pos < 100 ? '0' : '')) + p.pos;
+      return [String(p.pos), p.isStandard ? '\u2014' : des, p.name, String(p.qty), p.material];
+    });
+    return {
+      title: '\u0421\u043f\u0435\u0446\u0438\u0444\u0438\u043a\u0430\u0446\u0438\u044f',
+      cols: [
+        { w: 8, label: '\u041f\u043e\u0437.', align: 'center' },
+        { w: 26, label: '\u041e\u0431\u043e\u0437\u043d\u0430\u0447\u0435\u043d\u0438\u0435', align: 'left' },
+        { w: 32, label: '\u041d\u0430\u0438\u043c\u0435\u043d\u043e\u0432\u0430\u043d\u0438\u0435', align: 'left' },
+        { w: 8, label: '\u041a\u043e\u043b.', align: 'center' },
+        { w: 16, label: '\u041c\u0430\u0442\u0435\u0440\u0438\u0430\u043b', align: 'left' }
+      ],
+      rows: rows
+    };
+  }
+
   function makeDrawing(res) {
     var notes = (res.notes || []).slice();
+    notes.unshift('\u041b\u0438\u0441\u0442 1 \u2014 \u0441\u0431\u043e\u0440\u043e\u0447\u043d\u044b\u0439 \u0447\u0435\u0440\u0442\u0451\u0436. \u041f\u043e\u0434\u0440\u043e\u0431\u043d\u044b\u0435 \u0447\u0435\u0440\u0442\u0435\u0436\u0438 \u0434\u0435\u0442\u0430\u043b\u0435\u0439 \u2014 \u043d\u0430 \u0441\u043b\u0435\u0434\u0443\u044e\u0449\u0438\u0445 \u043b\u0438\u0441\u0442\u0430\u0445.');
     var dr = new dw.Drawing({
-      title: twoLine(res.name),
+      title: twoLine(res.name) + '\n\u0414\u043d' + U.fs(res.dn),
       designation: res.designation + ' \u0421\u0411',
       material: OP.gost.steel(res.params.steelSupport).name,
       mass: res.totals.mass,
       notes: notes,
-      tables: [paramsTable(res)],
+      tables: [specTable(res)],
+      tableLayout: 'left',
       stamp: stampOf(res)
     });
     dr.notes = notes.concat(STD_NOTES);
@@ -4510,6 +4578,383 @@ table.doc tr.pick-cur td { background: var(--accent-soft); }
 
   OP.drawings = { build: build, renderSVG: renderSVG, autoFormat: autoFormat, BUILDERS: BUILDERS };
   OP.STD_NOTES = STD_NOTES;
+})(typeof globalThis !== 'undefined' ? globalThis : this);
+
+</script>
+<script>
+/* ==== js/draw/parts.js ==== */
+/* =============================================================================
+ *  draw/parts.js — комплект: лист 1 общий (сборка), далее подробные чертежи
+ *  каждой детали собственного изготовления (как на рабочих комплектах цеха).
+ * ========================================================================== */
+(function (root) {
+  'use strict';
+  var OP = (root.OP = root.OP || {});
+  var U = OP.util, dw = OP.dw;
+
+  function pad3(n) { return (n < 10 ? '00' : (n < 100 ? '0' : '')) + n; }
+  function partDesig(res, p) { return res.designation + '.' + pad3(p.pos); }
+  function twoLine(s) {
+    s = String(s);
+    var w = s.split(' ');
+    if (w.length < 3 || s.length <= 22) return s;
+    var mid = Math.ceil(w.length / 2);
+    return w.slice(0, mid).join(' ') + '\n' + w.slice(mid).join(' ');
+  }
+  function kindOf(p) {
+    var n = p.name || '';
+    var note = p.note || '';
+    if (/полухомут|полубугель|полукольц/i.test(n)) return 'clamp';
+    if (/корпус/i.test(n)) return 'housing';
+    if (/ребро|щит/i.test(n)) return 'rib';
+    if (/косынк/i.test(n) && /R\s*\d|труб|образующ/i.test(note)) return 'rib';
+    if (/косынк/i.test(n)) return 'gusset';
+    if (/плит/i.test(n)) return 'plate';
+    if (/упор/i.test(n)) return 'block';
+    if (/стенк|торц/i.test(n)) return 'plate';
+    if (p.profile === 'pipe') return 'pipe';
+    if (p.profile === 'angle') return 'angle';
+    if (p.profile === 'strip') return 'strip';
+    return p.profile === 'sheet' ? 'plate' : 'strip';
+  }
+  function holeD(res, p) {
+    var m = String(p.note || '').match(/[\u2300\u00d8]\s*(\d+(?:[.,]\d+)?)/);
+    if (m) return +String(m[1]).replace(',', '.');
+    if (res.data && res.data.dAnHole && /плит/i.test(p.name)) return res.data.dAnHole;
+    if (res.data && res.data.dHole && /хомут|бугел|ушк|полу/i.test(p.name)) return res.data.dHole;
+    var h = (res.holes || [])[0];
+    return h ? +h.d : 0;
+  }
+  function pipeR(res, p) {
+    var m = String(p.note || '').match(/R\s*(\d+(?:[.,]\d+)?)/);
+    if (m) return +String(m[1]).replace(',', '.');
+    if (/труб|образующ/i.test(p.note || '') && res.d) return res.d / 2;
+    if (res.data && res.data.Rc) return res.data.Rc;
+    return res.d ? res.d / 2 : 0;
+  }
+
+  var PART_NOTES = [
+    '\u041d\u0435\u0443\u043a\u0430\u0437\u0430\u043d\u043d\u044b\u0435 \u043f\u0440\u0435\u0434\u0435\u043b\u044c\u043d\u044b\u0435 \u043e\u0442\u043a\u043b\u043e\u043d\u0435\u043d\u0438\u044f \u2014 \u043f\u043e \u0413\u041e\u0421\u0422 30893.1-2002 (H14, h14, \u00b1IT14/2).',
+    '\u041e\u0441\u0442\u0440\u044b\u0435 \u043a\u0440\u043e\u043c\u043a\u0438 \u043f\u0440\u0438\u0442\u0443\u043f\u0438\u0442\u044c. \u0417\u0430\u0443\u0441\u0435\u043d\u0446\u044b \u0443\u0434\u0430\u043b\u0438\u0442\u044c.',
+    '\u0428\u0435\u0440\u043e\u0445\u043e\u0432\u0430\u0442\u043e\u0441\u0442\u044c \u043d\u0435\u0443\u043a\u0430\u0437\u0430\u043d\u043d\u044b\u0445 \u043f\u043e\u0432\u0435\u0440\u0445\u043d\u043e\u0441\u0442\u0435\u0439 \u2014 Rz 32.'
+  ];
+
+  function newPartDr(res, p) {
+    var notes = [];
+    if (p.note) notes.push(p.note);
+    notes = notes.concat(PART_NOTES);
+    return new dw.Drawing({
+      title: twoLine(p.name + (p.qty > 1 ? ', ' + p.qty + ' \u0448\u0442.' : '')),
+      designation: partDesig(res, p),
+      material: p.material,
+      mass: p.unitMass,
+      notes: notes,
+      tables: [{
+        title: '\u0414\u0435\u0442\u0430\u043b\u044c',
+        cols: [
+          { w: 28, label: '\u041f\u0430\u0440\u0430\u043c\u0435\u0442\u0440', align: 'left' },
+          { w: 36, label: '\u0417\u043d\u0430\u0447\u0435\u043d\u0438\u0435', align: 'left' }
+        ],
+        rows: [
+          ['\u0412\u0445\u043e\u0434\u0438\u0442 \u0432', res.designation + ' \u0421\u0411'],
+          ['\u041f\u043e\u0437\u0438\u0446\u0438\u044f', String(p.pos)],
+          ['\u041a\u043e\u043b\u0438\u0447\u0435\u0441\u0442\u0432\u043e \u043d\u0430 \u0438\u0437\u0434\u0435\u043b\u0438\u0435', String(p.qty)],
+          ['\u041c\u0430\u0442\u0435\u0440\u0438\u0430\u043b', p.material],
+          ['\u0417\u0430\u0433\u043e\u0442\u043e\u0432\u043a\u0430', p.blank || p.dimsText || '']
+        ]
+      }],
+      stamp: {
+        litera: '\u041e1',
+        org: '\u0418\u0437\u0433\u043e\u0442\u043e\u0432\u0438\u0442\u0435\u043b\u044c',
+        stampLeft: '\u0424\u043e\u0440\u043c\u0430 1 \u0413\u041e\u0421\u0422 2.104'
+      }
+    });
+  }
+
+  function roughness(v, x, y) {
+    v.text(x, y, '\u221a Rz 32 /', 3.5, { anchor: 'end' });
+  }
+
+  function drawPlate(dr, res, p) {
+    var d = p.dims || {}, a = +d.a || +d.L || 200, b = +d.b || +d.w || 160, t = +d.t || 10;
+    var hd = holeD(res, p);
+    var e = (res.data && res.data.eAn) || 50;
+    var v1 = dr.addView('\u0412\u0438\u0434 \u0441\u0432\u0435\u0440\u0445\u0443');
+    v1.rect(-a / 2, -b / 2, a / 2, b / 2, 'main');
+    v1.axisH(-a / 2 - 12, a / 2 + 12, 0);
+    v1.axisV(-b / 2 - 12, b / 2 + 12, 0);
+    if (hd > 0 && /плит/i.test(p.name)) {
+      [[1, 1], [1, -1], [-1, 1], [-1, -1]].forEach(function (s) {
+        v1.circle(s[0] * (a / 2 - e), s[1] * (b / 2 - e), hd / 2, 'main');
+        v1.axisH(s[0] * (a / 2 - e) - hd, s[0] * (a / 2 - e) + hd, s[1] * (b / 2 - e));
+        v1.axisV(s[1] * (b / 2 - e) - hd, s[1] * (b / 2 - e) + hd, s[0] * (a / 2 - e));
+      });
+      v1.dimD(a / 2 - e, b / 2 - e, hd / 2, 40, '\u2300' + U.fs(hd) + ' (4 \u043e\u0442\u0432.)');
+      v1.dimX(-(a / 2 - e), a / 2 - e, b / 2, 14);
+      v1.dimY(-(b / 2 - e), b / 2 - e, -a / 2, -14);
+    }
+    v1.dimX(-a / 2, a / 2, -b / 2, -16);
+    v1.dimY(-b / 2, b / 2, a / 2, 16);
+    roughness(v1, a / 2, b / 2 + 28);
+
+    var v2 = dr.addView('\u0412\u0438\u0434 \u0441\u0431\u043e\u043a\u0443');
+    v2.rect(-a / 2, 0, a / 2, t, 'main');
+    if (hd > 0 && /плит/i.test(p.name)) {
+      v2.line(-(a / 2 - e) - hd / 2, 0, -(a / 2 - e) - hd / 2, t, 'dash');
+      v2.line(-(a / 2 - e) + hd / 2, 0, -(a / 2 - e) + hd / 2, t, 'dash');
+      v2.line((a / 2 - e) - hd / 2, 0, (a / 2 - e) - hd / 2, t, 'dash');
+      v2.line((a / 2 - e) + hd / 2, 0, (a / 2 - e) + hd / 2, t, 'dash');
+    }
+    v2.dimX(-a / 2, a / 2, 0, -12);
+    v2.dimY(0, t, a / 2, 12, U.fs(t));
+  }
+
+  function drawRib(dr, res, p) {
+    var d = p.dims || {}, w = +d.a || 150, h = +d.b || 180, t = +d.t || 10;
+    var R = pipeR(res, p);
+    var half = w / 2;
+    var saddle = R > 8 && /труб|образующ|R\d|щит/i.test(String(p.note || p.name || ''));
+    var ySide = saddle ? Math.max(h - R, h * 0.35) : h;
+    var v1 = dr.addView('\u0412\u0438\u0434 \u0441\u043f\u0435\u0440\u0435\u0434\u0438');
+    if (saddle) {
+      var cut = Math.min(R, half - 2);
+      v1.line(-half, 0, half, 0, 'main');
+      v1.line(-half, 0, -half, ySide, 'main');
+      v1.line(half, 0, half, ySide, 'main');
+      if (cut < half - 1) {
+        v1.line(-half, ySide, -cut, ySide, 'main');
+        v1.line(cut, ySide, half, ySide, 'main');
+      }
+      v1.arc(0, ySide + Math.sqrt(Math.max(R * R - cut * cut, 0)), R,
+        180 + Math.atan2(Math.sqrt(Math.max(R * R - cut * cut, 1e-6)), cut) * 180 / Math.PI,
+        360 - Math.atan2(Math.sqrt(Math.max(R * R - cut * cut, 1e-6)), cut) * 180 / Math.PI, 'main');
+      v1.dimR(0, ySide + Math.sqrt(Math.max(R * R - cut * cut, 0)), R, 65, 'R' + U.fs(R));
+    } else {
+      v1.rect(-half, 0, half, h, 'main');
+    }
+    v1.axisV(-8, ySide + 12, 0);
+    v1.dimX(-half, half, 0, -14);
+    v1.dimY(0, ySide, half, 16);
+    roughness(v1, half, ySide + 24);
+
+    var v2 = dr.addView('\u0412\u0438\u0434 \u0441\u0431\u043e\u043a\u0443');
+    v2.rect(-t / 2, 0, t / 2, ySide, 'main');
+    if (saddle) v2.line(-t / 2, ySide, t / 2, ySide, 'thin');
+    v2.dimX(-t / 2, t / 2, 0, -12, U.fs(t));
+    v2.dimY(0, ySide, t / 2, 12);
+  }
+
+  function drawGusset(dr, res, p) {
+    var d = p.dims || {}, a = +d.a || 80, b = +d.b || 110, t = +d.t || 8;
+    var R = pipeR(res, p);
+    var v1 = dr.addView('\u0412\u0438\u0434 \u0441\u043f\u0435\u0440\u0435\u0434\u0438');
+    if (R > 0 && /R\d/.test(p.note || '')) {
+      var cut = Math.min(R, a * 0.45);
+      v1.poly([[0, 0], [a, 0], [a, b - cut], [0, b]], 'main', true);
+      v1.arc(0, b - R, R, 0, 80, 'main');
+      v1.dimR(0, b - R, R, 50, 'R' + U.fs(R));
+    } else {
+      v1.poly([[0, 0], [a, 0], [0, b]], 'main', true);
+    }
+    v1.dimX(0, a, 0, -14);
+    v1.dimY(0, b, 0, -14);
+    roughness(v1, a, b + 16);
+
+    var v2 = dr.addView('\u0412\u0438\u0434 \u0441\u0431\u043e\u043a\u0443');
+    v2.rect(0, 0, t, b, 'main');
+    v2.dimX(0, t, 0, -12, U.fs(t));
+    v2.dimY(0, b, t, 12);
+  }
+
+  function drawClampPart(dr, res, p) {
+    var d = res.data || {}, dim = p.dims || {};
+    var R = d.R || (res.d ? res.d / 2 : 50);
+    var t = dim.t || d.tCl || 6;
+    var b = dim.b || d.bCl || 60;
+    var lug = d.L_lug || Math.max(30, 2.2 * (d.dBolt || 16));
+    var Rc = R + t;
+    var hd = holeD(res, p) || (d.dHole || 18);
+    var xBolt = Rc + lug * 0.55;
+    var v1 = dr.addView('\u0412\u0438\u0434 \u0441\u0431\u043e\u043a\u0443');
+    v1.arc(0, 0, R, 0, 180, 'main');
+    v1.arc(0, 0, Rc, 0, 180, 'main');
+    v1.line(-Rc, 0, -R, 0, 'main');
+    v1.line(Rc, 0, R, 0, 'main');
+    v1.rect(-Rc - lug, 0, -Rc, t, 'main');
+    v1.rect(Rc, 0, Rc + lug, t, 'main');
+    v1.circle(-xBolt, t / 2, hd / 2, 'main');
+    v1.circle(xBolt, t / 2, hd / 2, 'main');
+    v1.axisH(-Rc - lug - 16, Rc + lug + 16, 0);
+    v1.axisV(-8, Rc + 16, 0);
+    v1.dimX(-Rc - lug, Rc + lug, 0, -18);
+    v1.dimX(-Rc, Rc, t, 16);
+    v1.dimY(0, Rc, Rc + lug, 16);
+    v1.dimD(xBolt, t / 2, hd / 2, -20, '\u2300' + U.fs(hd));
+    v1.dimY(0, t, -Rc - lug, -12, U.fs(t));
+    roughness(v1, Rc + lug, Rc + 28);
+
+    var L = dim.L || d.Ldev || Math.round(Math.PI * (R + t / 2) + 2 * lug);
+    var v2 = dr.addView('\u0420\u0430\u0437\u0432\u0451\u0440\u0442\u043a\u0430');
+    v2.rect(0, 0, L, b, 'main');
+    v2.circle(lug * 0.55, b / 2, hd / 2, 'main');
+    v2.circle(L - lug * 0.55, b / 2, hd / 2, 'main');
+    v2.axisH(-8, L + 8, b / 2);
+    v2.dimX(0, L, 0, -14);
+    v2.dimY(0, b, L, 12, U.fs(b));
+    v2.dimD(lug * 0.55, b / 2, hd / 2, 50, '\u2300' + U.fs(hd));
+    v2.text(L / 2, b + 18, '\u0440\u0430\u0437\u0432\u0451\u0440\u0442\u043a\u0430 ' + U.fs(L) + ' \u043c\u043c', 3.2, { anchor: 'middle' });
+  }
+
+  function drawHousing(dr, res, p) {
+    var d = res.data || {}, dim = p.dims || {};
+    var W = d.Wcase || dim.b || 200, H = d.hCase || 80, t = d.tCase || dim.t || 6, L = d.Lcase || dim.a || 180;
+    var v1 = dr.addView('\u0412\u0438\u0434 \u0441\u043f\u0435\u0440\u0435\u0434\u0438');
+    v1.poly([[-W / 2, 0], [W / 2, 0], [W / 2, t], [W / 2 - t, t], [W / 2 - t, H],
+      [-W / 2 + t, H], [-W / 2 + t, t], [-W / 2, t]], 'main', true);
+    v1.dimX(-W / 2, W / 2, 0, -16);
+    v1.dimY(0, H, W / 2, 16);
+    v1.dimX(W / 2 - t, W / 2, H, 12, U.fs(t));
+    roughness(v1, W / 2, H + 22);
+    var v2 = dr.addView('\u0412\u0438\u0434 \u0441\u0431\u043e\u043a\u0443');
+    v2.rect(-L / 2, 0, L / 2, H, 'main');
+    v2.line(-L / 2, t, L / 2, t, 'thin');
+    v2.dimX(-L / 2, L / 2, 0, -14);
+    v2.dimY(0, t, L / 2, 12, U.fs(t));
+    var dev = dim.b || d.devW || (W + 2 * Math.max(H - t, 0));
+    var v3 = dr.addView('\u0420\u0430\u0437\u0432\u0451\u0440\u0442\u043a\u0430');
+    v3.rect(0, 0, L, dev, 'main');
+    if (H > t + 2 && dev > 2 * H) {
+      v3.line(0, H, L, H, 'dash');
+      v3.line(0, dev - H, L, dev - H, 'dash');
+    }
+    v3.dimX(0, L, 0, -14);
+    v3.dimY(0, dev, L, 12);
+    v3.text(L / 2, dev + 16, '\u0440\u0430\u0437\u0432\u0451\u0440\u0442\u043a\u0430 ' + U.fs(dev) + ' \u043c\u043c', 3.2, { anchor: 'middle' });
+  }
+
+  function drawBlock(dr, res, p) {
+    var d = p.dims || {}, a = +d.a || 40, b = +d.b || 60, t = +d.t || 10;
+    var v1 = dr.addView('\u0412\u0438\u0434 \u0441\u043f\u0435\u0440\u0435\u0434\u0438');
+    v1.rect(-a / 2, 0, a / 2, b, 'main');
+    v1.dimX(-a / 2, a / 2, 0, -12);
+    v1.dimY(0, b, a / 2, 12);
+    var v2 = dr.addView('\u0412\u0438\u0434 \u0441\u0431\u043e\u043a\u0443');
+    v2.rect(-t / 2, 0, t / 2, b, 'main');
+    v2.dimX(-t / 2, t / 2, 0, -12, U.fs(t));
+  }
+
+  function drawStrip(dr, res, p) {
+    var d = p.dims || {}, L = +d.L || 300, b = +d.b || 50, t = +d.t || 6;
+    var v1 = dr.addView('\u0420\u0430\u0437\u0432\u0451\u0440\u0442\u043a\u0430');
+    v1.rect(0, 0, L, b, 'main');
+    v1.dimX(0, L, 0, -14);
+    v1.dimY(0, b, L, 12, U.fs(b));
+    var v2 = dr.addView('\u0421\u0435\u0447\u0435\u043d\u0438\u0435');
+    v2.rect(0, 0, t, b, 'main');
+    v2.dimX(0, t, 0, -12, U.fs(t));
+  }
+
+  function drawPipe(dr, res, p) {
+    var d = p.dims || {}, D = +d.d || res.d || 108, s = +d.s || res.wall || 4, L = +d.L || 200;
+    var v1 = dr.addView('\u0412\u0438\u0434 \u0441\u0431\u043e\u043a\u0443');
+    v1.rect(0, -D / 2, L, D / 2, 'main');
+    v1.line(0, -D / 2 + s, L, -D / 2 + s, 'thin');
+    v1.line(0, D / 2 - s, L, D / 2 - s, 'thin');
+    v1.axisH(-10, L + 10, 0);
+    v1.dimX(0, L, -D / 2, -14);
+    v1.dimY(-D / 2, D / 2, L, 14, '\u2300' + U.fs(D));
+    var v2 = dr.addView('\u0412\u0438\u0434 \u0441\u0442\u043e\u0440\u0446\u0430');
+    v2.circle(0, 0, D / 2, 'main');
+    v2.circle(0, 0, D / 2 - s, 'main');
+    v2.axisH(-D / 2 - 10, D / 2 + 10, 0);
+    v2.axisV(-D / 2 - 10, D / 2 + 10, 0);
+    v2.dimD(0, 0, D / 2, 35, '\u2300' + U.fs(D));
+  }
+
+  function drawAngle(dr, res, p) {
+    var d = p.dims || {}, b = +d.b || 50, t = +d.t || 5, L = +d.L || 200;
+    var v1 = dr.addView('\u041f\u0440\u043e\u0444\u0438\u043b\u044c');
+    v1.poly([[0, 0], [b, 0], [b, t], [t, t], [t, b], [0, b]], 'main', true);
+    v1.dimX(0, b, 0, -12);
+    v1.dimY(0, b, 0, -12);
+    var v2 = dr.addView('\u0412\u0438\u0434 \u0441\u0431\u043e\u043a\u0443');
+    v2.rect(0, 0, L, b, 'main');
+    v2.dimX(0, L, 0, -12);
+  }
+
+  var DRAW = {
+    plate: drawPlate, rib: drawRib, gusset: drawGusset, clamp: drawClampPart,
+    housing: drawHousing, block: drawBlock, strip: drawStrip, pipe: drawPipe, angle: drawAngle
+  };
+
+  function buildPart(res, p) {
+    var dr = newPartDr(res, p);
+    var fn = DRAW[kindOf(p)] || drawPlate;
+    fn(dr, res, p);
+    return dr;
+  }
+
+  function fabricated(res) {
+    return (res.parts || []).filter(function (p) { return !p.isStandard; });
+  }
+
+  function buildSet(res) {
+    var asm = OP.drawings.build(res);
+    var parts = fabricated(res).map(function (p) { return buildPart(res, p); });
+    return { assembly: asm, parts: parts, all: [asm].concat(parts) };
+  }
+
+  function pickFormat(dr, opts) {
+    opts = opts || {};
+    if (opts.format && opts.format !== 'auto') return opts.format;
+    var list = opts.formats || ['A4', 'A3', 'A2', 'A1'];
+    var minK = opts.minScale != null ? opts.minScale : 0.5;
+    var bestAny = null, chosen = list[0];
+    for (var i = 0; i < list.length; i++) {
+      var info = OP.dw.renderSVG(dr, Object.assign({}, opts, {
+        format: list[i], scale: 'auto', infoOnly: true
+      }));
+      if (!bestAny || info.k > bestAny.k) { bestAny = info; chosen = list[i]; }
+      if (info.k >= minK - 1e-9 && info.fits) return list[i];
+    }
+    return bestAny ? bestAny.format : chosen;
+  }
+
+  function renderOne(dr, opts) {
+    opts = opts || {};
+    var format = pickFormat(dr, opts);
+    var o = Object.assign({}, opts, { format: format, scale: opts.scale || 'auto' });
+    var info = OP.dw.renderSVG(dr, Object.assign({}, o, { infoOnly: true }));
+    var svg = OP.dw.renderSVG(dr, o);
+    return { drawing: dr, svg: svg, info: info, designation: dr.designation, title: dr.title };
+  }
+
+  function renderSet(res, opts) {
+    opts = opts || {};
+    var set = buildSet(res);
+    var n = set.all.length;
+    var forced = opts.format && opts.format !== 'auto';
+    var sheets = set.all.map(function (dr, i) {
+      var pageOpts = Object.assign({}, opts, { sheet: i + 1, sheets: n });
+      if (!forced) {
+        pageOpts.format = 'auto';
+        pageOpts.minScale = i === 0 ? 0.2 : 0.25;
+        pageOpts.formats = i === 0 ? ['A3', 'A2', 'A1'] : ['A4', 'A3', 'A2', 'A1'];
+      }
+      var page = renderOne(dr, pageOpts);
+      page.kind = i === 0 ? 'assembly' : 'part';
+      page.index = i;
+      return page;
+    });
+    return { sheets: sheets, assembly: sheets[0], parts: sheets.slice(1) };
+  }
+
+  OP.drawings.buildPart = buildPart;
+  OP.drawings.buildSet = buildSet;
+  OP.drawings.renderSet = renderSet;
+  OP.drawings.renderOne = renderOne;
+  OP.drawings.partDesig = partDesig;
+  OP.drawings.fabricated = fabricated;
 })(typeof globalThis !== 'undefined' ? globalThis : this);
 
 </script>
@@ -7822,8 +8267,10 @@ table.doc tr.pick-cur td { background: var(--accent-soft); }
     });
     p.kits.forEach(function (k) {
       try {
-        var svg = OP.drawings.renderSVG(k.res, { format: 'A3' });
-        h += '<div class="sheet">' + stripXml(svg) + '</div>';
+        var set = OP.drawings.renderSet(k.res, { format: 'auto' });
+        set.sheets.forEach(function (s) {
+          h += '<div class="sheet">' + stripXml(s.svg) + '</div>';
+        });
       } catch (e) { }
     });
     p.sheets.forEach(function (s) {
@@ -7921,6 +8368,7 @@ table.doc tr.pick-cur td { background: var(--accent-soft); }
     scale: 'auto',
     v3: { pipeMode: 'solid', grid: true, axes: true, shadow: true, welds: true, chamfer: true, spin: false, preset: 'iso' },
     shopStock: '1500x6000',
+    drawPage: 0,
     tab: 'calc'
   };
 
@@ -8429,24 +8877,51 @@ table.doc tr.pick-cur td { background: var(--accent-soft); }
   }
 
   /* ============================== ЧЕРТЁЖ =============================== */
-  var lastSvg = '', lastFormat = 'A3';
+  var lastSvg = '', lastFormat = 'A3', lastSet = null, lastDraw = null;
+
+  function drawingOpts(res) {
+    return {
+      format: state.sheet === 'auto' ? 'auto' : state.sheet,
+      scale: state.scale
+    };
+  }
 
   function renderDrawing(res) {
     var box = $('#drawPreview');
-    var opts = { format: state.sheet === 'auto' ? 'A3' : state.sheet, scale: state.scale };
-    var info;
-    if (state.sheet === 'auto') {
-      info = OP.drawings.autoFormat(res, { minScale: 0.2 });
-      opts.format = info.format;
-    } else {
-      info = OP.drawings.renderSVG(res, Object.assign({}, opts, { infoOnly: true }));
+    var tabs = $('#drawSheets');
+    var opts = drawingOpts(res);
+    lastSet = OP.drawings.renderSet(res, opts);
+    var n = lastSet.sheets.length;
+    if (state.drawPage >= n) state.drawPage = 0;
+    var showAll = state.drawPage === 'all';
+    tabs.innerHTML = '';
+    function addTab(id, label) {
+      var b = el('button', 'btn tiny' + ((state.drawPage === id) ? ' active' : ''), label);
+      b.setAttribute('data-drawpage', String(id));
+      tabs.appendChild(b);
     }
-    var svg = OP.drawings.renderSVG(res, opts);
-    lastSvg = svg;
-    lastFormat = info.format;
-    box.innerHTML = svg.replace(/<\?xml[^>]*\?>/, '');
-    $('#sheetInfo').textContent = 'Формат ' + info.format + ', масштаб ' + info.scale +
-      '; занято ' + U.num(info.w, 0) + '\u00d7' + U.num(info.h, 0) + ' мм листа';
+    addTab(0, '1. Общий чертёж');
+    lastSet.parts.forEach(function (s, i) {
+      addTab(i + 1, (i + 2) + '. ' + String(s.title || s.designation).split('\n')[0]);
+    });
+    addTab('all', 'Все листы');
+    box.classList.toggle('stack', showAll);
+    if (showAll) {
+      box.innerHTML = lastSet.sheets.map(function (s) { return s.svg.replace(/<\?xml[^>]*\?>/, ''); }).join('');
+      lastSvg = lastSet.sheets[0].svg;
+      lastDraw = lastSet.sheets[0].drawing;
+      lastFormat = lastSet.sheets[0].info.format;
+      $('#sheetInfo').textContent = n + ' листов, формат ' + lastFormat;
+    } else {
+      var page = lastSet.sheets[state.drawPage] || lastSet.sheets[0];
+      lastSvg = page.svg;
+      lastDraw = page.drawing;
+      lastFormat = page.info.format;
+      box.innerHTML = page.svg.replace(/<\?xml[^>]*\?>/, '');
+      $('#sheetInfo').textContent = page.designation + ' · формат ' + page.info.format +
+        ', масштаб ' + page.info.scale +
+        '; занято ' + U.num(page.info.w, 0) + '\u00d7' + U.num(page.info.h, 0) + ' мм';
+    }
   }
 
   function renderSpecTab(res) {
@@ -8824,7 +9299,7 @@ table.doc tr.pick-cur td { background: var(--accent-soft); }
   /* ============================== ЭКСПОРТ ============================== */
   function exportSVG() { D.download(fileName('svg'), lastSvg, 'image/svg+xml;charset=utf-8'); }
   function exportDXF() {
-    var dr = OP.drawings.build(lastRes);
+    var dr = lastDraw || OP.drawings.build(lastRes);
     OP.dxf.download(dr, fileName('dxf'));
   }
   function exportPNG() {
@@ -8855,10 +9330,14 @@ table.doc tr.pick-cur td { background: var(--accent-soft); }
   function printDrawing() {
     var w = root.open('', '_blank');
     if (!w) { alert('Разрешите всплывающие окна для печати.'); return; }
+    var set = lastSet || OP.drawings.renderSet(lastRes, drawingOpts(lastRes));
+    var body = set.sheets.map(function (s) {
+      return '<div class="sheet">' + s.svg.replace(/<\?xml[^>]*\?>/, '') + '</div>';
+    }).join('');
     w.document.write('<!DOCTYPE html><html><head><meta charset="utf-8"><title>' +
       esc(lastRes.designation) + '</title><style>@page{size:' + lastFormat + ' landscape;margin:0}' +
-      'body{margin:0}svg{display:block;width:100%;height:auto}</style></head><body>' +
-      lastSvg.replace(/<\?xml[^>]*\?>/, '') + '</body></html>');
+      'body{margin:0}.sheet{page-break-after:always}svg{display:block;width:100%;height:auto}</style></head><body>' +
+      body + '</body></html>');
     w.document.close();
     setTimeout(function () { try { w.focus(); w.print(); } catch (e) { } }, 400);
   }
@@ -9145,6 +9624,12 @@ table.doc tr.pick-cur td { background: var(--accent-soft); }
     });
     doc.addEventListener('click', function (e) {
       var t = e.target;
+      if (t.hasAttribute && t.hasAttribute('data-drawpage')) {
+        var v = t.getAttribute('data-drawpage');
+        state.drawPage = v === 'all' ? 'all' : +v;
+        if (lastRes) renderDrawing(lastRes);
+        return;
+      }
       if (t.hasAttribute && t.hasAttribute('data-orderdel')) {
         var id = t.getAttribute('data-orderdel');
         pushHistory();
