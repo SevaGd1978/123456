@@ -192,6 +192,10 @@ table.doc tr.pick-cur td { background: var(--accent-soft); }
 .specdoc:first-child { border-top: 0; margin-top: 0; padding-top: 0; }
 .specdoc h3 { margin: 0 0 4px; font-size: 13px; }
 .specdoc .tablewrap { max-height: none; }
+.nestgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; margin-top: 10px; }
+.nestcard { border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; background: #fff; }
+.nestcard h4 { margin: 0 0 6px; font-size: 12.5px; }
+.nestcard svg { display: block; width: 100%; height: auto; background: #f4f6fa; border-radius: 4px; }
 
 .prose { max-width: 1000px; }
 .prose h2 { text-transform: none; font-size: 15px; color: var(--ink); margin-top: 16px; }
@@ -214,7 +218,7 @@ table.doc tr.pick-cur td { background: var(--accent-soft); }
     <span class="logo">НО</span>
     <div>
       <div class="brand-title">Неподвижные опоры трубопроводов</div>
-      <div class="brand-sub">расчёт · стоимость · чертежи · спецификации</div>
+      <div class="brand-sub">расчёт · рабочие чертежи · раскрой · комплектация</div>
     </div>
   </div>
   <div class="proj">
@@ -430,18 +434,32 @@ table.doc tr.pick-cur td { background: var(--accent-soft); }
   <section class="panel" id="panel-order">
     <div class="card">
       <div class="drawbar">
-        <button id="btnOrderXlsx" class="btn primary">Заказ в XLSX</button>
+        <button id="btnShopPrint" class="btn primary" title="Сборочные чертежи, раскрой металла и комплектация">Рабочие чертежи</button>
+        <button id="btnShopSvg" class="btn" title="Скачать карты раскроя">Раскрой SVG</button>
+        <button id="btnOrderXlsx" class="btn">Заказ в XLSX</button>
         <button id="btnOrderCsv" class="btn">Заказ в CSV</button>
         <button id="btnOrderPrint" class="btn">Печать / PDF</button>
         <button id="btnImport" class="btn" title="Загрузить ведомость опор из XLSX или CSV">Импорт из Excel / CSV…</button>
         <button id="btnImportTemplate" class="btn ghost" title="Скачать файл-образец для заполнения">Шаблон для заполнения</button>
+        <label>Лист раскроя
+          <select id="shopStock">
+            <option value="1250x2500">1250×2500</option>
+            <option value="1500x3000">1500×3000</option>
+            <option value="1500x6000" selected>1500×6000</option>
+            <option value="2000x6000">2000×6000</option>
+          </select>
+        </label>
         <span class="spacer"></span>
         <button id="btnOrderClear" class="btn ghost">Очистить заказ</button>
       </div>
+      <p class="hint">Из заказа собирается комплект на производство: сборочный чертёж каждой опоры,
+        раскрой листа с марками деталей, карты реза проката и комплектовочная ведомость.</p>
       <div id="orderSummary" class="cards"></div>
       <div id="importBox"></div>
       <div id="orderTable" class="tablewrap"></div>
       <div id="orderMaterials" class="tablewrap"></div>
+      <div id="orderKit"></div>
+      <div id="orderNest"></div>
     </div>
   </section>
 
@@ -477,6 +495,10 @@ table.doc tr.pick-cur td { background: var(--accent-soft); }
         <li><b>Документы</b>: рабочий чертёж (3 вида, размеры, позиции, техтребования, основная надпись
           по форме 1 ГОСТ 2.104), спецификация, ведомость материалов, ведомость швов, проверочный расчёт,
           калькуляция, сводная ведомость заказа; выгрузка в SVG, DXF R12, XLSX, CSV, печать/PDF.</li>
+        <li><b>Рабочие чертежи производства из заказа</b>: сборочный чертёж каждой позиции,
+          раскрой листового проката (MaxRects, зазор реза 5 мм, кромка 10 мм, поворот 90°),
+          карты реза полосы / уголка / швеллера / трубы, комплектовочная ведомость деталей
+          и метизов с марками «обозначение/позиция». Кнопка на вкладке «Заказ».</li>
         <li><b>3D-вид</b>: объёмная модель опоры по тем же расчётным размерам с вращением, масштабом,
           пресетами видов и режимами показа трубопровода (сплошной / полупрозрачный / скрытый);
           экспорт PNG и печать. Рендеринг собственный (z-буфер, отсечение обратных граней) — без
@@ -7074,6 +7096,12 @@ table.doc tr.pick-cur td { background: var(--accent-soft); }
         .forEach(function (doc) { sheets.push(docToSheet(doc)); });
     });
     sheets.push(docToSheet(buildOrder(items)));
+    if (OP.shop && items.length) {
+      var shopPlan = OP.shop.plan(items);
+      sheets.push(docToSheet(OP.shop.buildKitDoc(shopPlan, {})));
+      sheets.push(docToSheet(OP.shop.buildNestDoc(shopPlan)));
+      sheets.push(docToSheet(OP.shop.buildBarsDoc(shopPlan)));
+    }
     /* прайс-лист */
     if (prices) {
       var rows = [[{ s: 5, v: '\u041f\u0440\u0430\u0439\u0441-\u043b\u0438\u0441\u0442 (\u0438\u0441\u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u043d \u0432 \u0440\u0430\u0441\u0447\u0451\u0442\u0435)' }], []];
@@ -7207,6 +7235,653 @@ table.doc tr.pick-cur td { background: var(--accent-soft); }
 })(typeof globalThis !== 'undefined' ? globalThis : this);
 
 </script>
+<script>
+/* ==== js/export/shop.js ==== */
+/* =============================================================================
+ *  export/shop.js — рабочие чертежи производства из заказа:
+ *  раскрой листа, карты реза проката, комплектация деталей опоры.
+ * ========================================================================== */
+(function (root) {
+  'use strict';
+  var OP = (root.OP = root.OP || {});
+  var U = OP.util;
+
+  var STOCKS = [
+    { id: '1250x2500', w: 1250, L: 2500, name: '1250\u00d72500' },
+    { id: '1500x3000', w: 1500, L: 3000, name: '1500\u00d73000' },
+    { id: '1500x6000', w: 1500, L: 6000, name: '1500\u00d76000' },
+    { id: '2000x6000', w: 2000, L: 6000, name: '2000\u00d76000' }
+  ];
+  var BAR_LEN = { strip: 6000, angle: 6000, channel: 12000, ibeam: 12000, pipe: 6000, round: 6000 };
+  var EDGE = 10;
+  var KERF = 5;
+  var BAR_TRIM = 15;
+  var BAR_KERF = 3;
+  var SHEET_PROFILES = { sheet: 1, custom: 1 };
+  var BAR_PROFILES = { strip: 1, angle: 1, channel: 1, ibeam: 1, pipe: 1, round: 1 };
+  var BUY_PROFILES = { bolt: 1, nut: 1, washer: 1, ppu: 1, shellPe: 1, shellZn: 1 };
+
+  function esc(s) {
+    return String(s === undefined || s === null ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+  function f(v) { return (Math.round(v * 100) / 100).toString(); }
+  function stockById(id) {
+    for (var i = 0; i < STOCKS.length; i++) if (STOCKS[i].id === id) return STOCKS[i];
+    return STOCKS[2];
+  }
+  function padPos(n) { return (n < 10 ? '0' : '') + n; }
+
+  function sheetSize(p) {
+    var d = p.dims || {};
+    var a = Math.max(+d.a || 0, +d.L || 0);
+    var b = Math.max(+d.b || 0, +d.w || 0);
+    if (p.profile === 'strip') { a = +d.L || 0; b = +d.b || 0; }
+    if (!(a > 0 && b > 0)) return null;
+    return { w: a, h: b, t: +d.t || 0 };
+  }
+  function barLen(p) {
+    var d = p.dims || {};
+    if (p.profile === 'strip' || p.profile === 'angle' || p.profile === 'channel' ||
+        p.profile === 'ibeam' || p.profile === 'pipe' || p.profile === 'round') {
+      return +d.L || 0;
+    }
+    return 0;
+  }
+
+  function clonePart(p, extra) {
+    var o = {}, k;
+    for (k in p) {
+      if (Object.prototype.hasOwnProperty.call(p, k) && k !== 'res') o[k] = p[k];
+    }
+    if (extra) for (k in extra) if (Object.prototype.hasOwnProperty.call(extra, k)) o[k] = extra[k];
+    return o;
+  }
+
+  /* ------------------------------------------- комплектация --- */
+  function collect(items) {
+    var sheets = [], bars = [], buy = [], kits = [];
+    items.forEach(function (it, idx) {
+      var res = it.res, qty = Math.max(1, +it.qty || 1);
+      var kitParts = [];
+      (res.parts || []).forEach(function (p) {
+        var n = Math.max(1, +p.qty || 1);
+        var lot = n * qty;
+        var row = clonePart(p, {
+          qtyEach: n, qtyLot: lot, massEach: p.unitMass, massLot: U.round(p.unitMass * lot, 4),
+          designation: res.designation, supportName: res.name, itemNo: idx + 1, mark: res.designation + '/' + padPos(p.pos)
+        });
+        kitParts.push(row);
+        var i, sz;
+        if (SHEET_PROFILES[p.profile] && !p.isStandard) {
+          sz = sheetSize(p);
+          if (sz) for (i = 0; i < lot; i++) sheets.push(clonePart(row, { inst: i + 1, bw: sz.w, bh: sz.h, t: sz.t }));
+        } else if (BAR_PROFILES[p.profile] && !p.isStandard) {
+          var L = barLen(p);
+          if (L > 0) for (i = 0; i < lot; i++) bars.push(clonePart(row, { inst: i + 1, len: L }));
+        } else {
+          buy.push(row);
+        }
+      });
+      kits.push({
+        no: idx + 1, id: it.id, res: res, qty: qty,
+        designation: res.designation, name: res.name, dn: res.dn,
+        mass: res.totals.mass, parts: kitParts
+      });
+    });
+    return { sheets: sheets, bars: bars, buy: buy, kits: kits };
+  }
+
+  function summarizeBuy(buy) {
+    var map = {}, keys = [];
+    buy.forEach(function (p) {
+      var k = p.profile + '|' + p.blank + '|' + (p.dimsText || '');
+      if (!map[k]) {
+        map[k] = { name: p.name, profile: p.profile, blank: p.blank, dimsText: p.dimsText, qty: 0, mass: 0 };
+        keys.push(k);
+      }
+      map[k].qty += p.qtyLot;
+      map[k].mass += p.massLot;
+    });
+    return keys.map(function (k) { return map[k]; });
+  }
+
+  /* ------------------------------------------- 2D MaxRects --- */
+  function intersects(a, b) {
+    return a.x < b.x + b.w - 0.01 && a.x + a.w > b.x + 0.01 &&
+           a.y < b.y + b.h - 0.01 && a.y + a.h > b.y + 0.01;
+  }
+  function containsRect(a, b) {
+    return b.x >= a.x - 0.01 && b.y >= a.y - 0.01 &&
+           b.x + b.w <= a.x + a.w + 0.01 && b.y + b.h <= a.y + a.h + 0.01;
+  }
+  function splitFree(fr, used) {
+    if (!intersects(fr, used)) return [fr];
+    var out = [];
+    if (used.x > fr.x + 0.01) out.push({ x: fr.x, y: fr.y, w: used.x - fr.x, h: fr.h });
+    if (used.x + used.w < fr.x + fr.w - 0.01)
+      out.push({ x: used.x + used.w, y: fr.y, w: fr.x + fr.w - used.x - used.w, h: fr.h });
+    if (used.y > fr.y + 0.01) out.push({ x: fr.x, y: fr.y, w: fr.w, h: used.y - fr.y });
+    if (used.y + used.h < fr.y + fr.h - 0.01)
+      out.push({ x: fr.x, y: used.y + used.h, w: fr.w, h: fr.y + fr.h - used.y - used.h });
+    return out;
+  }
+  function pruneFree(free) {
+    var keep = [];
+    for (var i = 0; i < free.length; i++) {
+      var drop = false;
+      for (var j = 0; j < free.length; j++) {
+        if (i !== j && containsRect(free[j], free[i])) { drop = true; break; }
+      }
+      if (!drop && free[i].w > 0.5 && free[i].h > 0.5) keep.push(free[i]);
+    }
+    return keep;
+  }
+  function packSheet(parts, stockW, stockL, gap) {
+    var list = parts.slice().sort(function (a, b) {
+      return Math.max(b.bw, b.bh) - Math.max(a.bw, a.bh) || (b.bw * b.bh - a.bw * a.bh);
+    });
+    var free = [{ x: EDGE, y: EDGE, w: stockW - 2 * EDGE, h: stockL - 2 * EDGE }];
+    var placed = [], left = [];
+    list.forEach(function (p) {
+      var cand = [
+        { w: p.bw, h: p.bh, rot: false },
+        { w: p.bh, h: p.bw, rot: true }
+      ];
+      var best = null;
+      free.forEach(function (fr) {
+        cand.forEach(function (c) {
+          var pw = c.w + gap, ph = c.h + gap;
+          if (pw <= fr.w + 0.01 && ph <= fr.h + 0.01) {
+            var short = Math.min(fr.w - pw, fr.h - ph);
+            var long = Math.max(fr.w - pw, fr.h - ph);
+            if (!best || short < best.short - 0.01 || (Math.abs(short - best.short) < 0.01 && long < best.long)) {
+              best = { fr: fr, c: c, short: short, long: long };
+            }
+          }
+        });
+      });
+      if (!best) { left.push(p); return; }
+      var used = { x: best.fr.x, y: best.fr.y, w: best.c.w + gap, h: best.c.h + gap };
+      placed.push({
+        part: p, x: used.x, y: used.y, w: best.c.w, h: best.c.h, rot: best.c.rot
+      });
+      var next = [];
+      free.forEach(function (fr) { splitFree(fr, used).forEach(function (r) { next.push(r); }); });
+      free = pruneFree(next);
+    });
+    return { placed: placed, leftover: left };
+  }
+
+  function chooseStock(queue, preferred) {
+    var needW = 0, needH = 0, area = 0;
+    queue.forEach(function (p) {
+      var mw = Math.min(p.bw, p.bh), mh = Math.max(p.bw, p.bh);
+      if (mw > needW) needW = mw;
+      if (mh > needH) needH = mh;
+      area += p.bw * p.bh;
+    });
+    var slack = area * 1.4;
+    var cands = STOCKS.filter(function (st) {
+      return st.w >= needW + 2 * EDGE && st.L >= needH + 2 * EDGE;
+    }).slice().sort(function (a, b) { return a.w * a.L - b.w * b.L; });
+    if (!cands.length) {
+      return {
+        id: 'custom', w: Math.ceil(needW + 2 * EDGE), L: Math.ceil(needH + 2 * EDGE),
+        name: Math.ceil(needW + 2 * EDGE) + '\u00d7' + Math.ceil(needH + 2 * EDGE) + ' (\u0432\u043d\u0435 \u0441\u043e\u0440\u0442\u0430\u043c\u0435\u043d\u0442\u0430)'
+      };
+    }
+    var i;
+    for (i = 0; i < cands.length; i++) {
+      if (cands[i].w * cands[i].L >= slack) return cands[i];
+    }
+    if (preferred && preferred.w >= needW + 2 * EDGE && preferred.L >= needH + 2 * EDGE) return preferred;
+    return cands[cands.length - 1];
+  }
+  function nestSheets(parts, stock) {
+    var groups = {};
+    parts.forEach(function (p) {
+      var key = (p.steelId || 'st3sp5') + '|' + U.round(p.t, 1);
+      if (!groups[key]) groups[key] = { steelId: p.steelId || 'st3sp5', t: p.t, parts: [] };
+      groups[key].parts.push(p);
+    });
+    var sheets = [];
+    Object.keys(groups).forEach(function (key) {
+      var g = groups[key];
+      var steel = OP.gost.steel(g.steelId);
+      var queue = g.parts.slice();
+      var guard = 0;
+      while (queue.length && guard < 400) {
+        guard++;
+        var st = chooseStock(queue, stock);
+        var pack = packSheet(queue, st.w, st.L, KERF);
+        if (!pack.placed.length) {
+          var one = queue.shift();
+          st = { id: 'custom', w: one.bw + 2 * EDGE, L: one.bh + 2 * EDGE,
+            name: Math.ceil(one.bw + 2 * EDGE) + '\u00d7' + Math.ceil(one.bh + 2 * EDGE) + ' (\u043e\u0434\u043d\u0430 \u0434\u0435\u0442\u0430\u043b\u044c)' };
+          pack = { placed: [{ part: one, x: EDGE, y: EDGE, w: one.bw, h: one.bh, rot: false }], leftover: queue };
+        }
+        var usedA = 0;
+        pack.placed.forEach(function (pl) { usedA += pl.w * pl.h; });
+        var stockA = st.w * st.L;
+        sheets.push({
+          no: sheets.length + 1,
+          stock: st,
+          t: g.t,
+          steelId: g.steelId,
+          steelName: steel.name,
+          placed: pack.placed,
+          usedArea: usedA,
+          stockArea: stockA,
+          util: stockA > 0 ? usedA / stockA : 0,
+          mass: usedA * g.t * U.RHO_STEEL,
+          stockMass: stockA * g.t * U.RHO_STEEL
+        });
+        queue = pack.leftover;
+      }
+    });
+    return sheets;
+  }
+
+  /* ------------------------------------------- 1D bars --- */
+  function nestBars(parts) {
+    var groups = {};
+    parts.forEach(function (p) {
+      var d = p.dims || {};
+      var key = p.profile + '|' + (p.steelId || '') + '|' + (p.dimsText || '') + '|' +
+        (d.t || '') + '|' + (d.b || '') + '|' + (d.d || '') + '|' + (d.s || '') + '|' + (d.no || '');
+      if (!groups[key]) groups[key] = { profile: p.profile, steelId: p.steelId, blank: p.blank, dimsText: p.dimsText, parts: [] };
+      groups[key].parts.push(p);
+    });
+    var rods = [];
+    Object.keys(groups).forEach(function (key) {
+      var g = groups[key];
+      var stockL = BAR_LEN[g.profile] || 6000;
+      var usable = stockL - 2 * BAR_TRIM;
+      var list = g.parts.slice().sort(function (a, b) { return b.len - a.len; });
+      var bins = [];
+      list.forEach(function (p) {
+        var need = p.len + BAR_KERF;
+        var bin = null;
+        for (var i = 0; i < bins.length; i++) {
+          if (bins[i].used + need <= usable + 0.01) { bin = bins[i]; break; }
+        }
+        if (!bin) {
+          bin = { no: 0, stockL: stockL, usable: usable, used: 0, cuts: [], leftover: usable };
+          bins.push(bin);
+        }
+        bin.cuts.push({ part: p, len: p.len });
+        bin.used += need;
+        bin.leftover = Math.max(0, usable - bin.used);
+      });
+      bins.forEach(function (b) {
+        b.no = rods.length + 1;
+        b.profile = g.profile;
+        b.blank = g.blank;
+        b.dimsText = g.dimsText;
+        b.steelId = g.steelId;
+        b.steelName = (OP.gost.steel(g.steelId || 'st3sp5') || {}).name || '';
+        rods.push(b);
+      });
+    });
+    return rods;
+  }
+
+  function plan(items, opts) {
+    opts = opts || {};
+    var stock = stockById(opts.stockId || '1500x6000');
+    var raw = collect(items);
+    var sheets = nestSheets(raw.sheets, stock);
+    var bars = nestBars(raw.bars);
+    var buy = summarizeBuy(raw.buy);
+    var sheetUtil = 0, sheetMass = 0, stockMass = 0;
+    sheets.forEach(function (s) { sheetUtil += s.util; sheetMass += s.mass; stockMass += s.stockMass; });
+    return {
+      stock: stock,
+      kits: raw.kits,
+      sheets: sheets,
+      bars: bars,
+      buy: buy,
+      blanks: raw.sheets.length,
+      barCuts: raw.bars.length,
+      stats: {
+        sheetCount: sheets.length,
+        barCount: bars.length,
+        util: sheets.length ? sheetUtil / sheets.length : 0,
+        nestMass: sheetMass,
+        stockMass: stockMass,
+        wasteMass: Math.max(0, stockMass - sheetMass)
+      }
+    };
+  }
+
+  /* ------------------------------------------- документы --- */
+  function buildKitDoc(p, meta) {
+    meta = meta || {};
+    var cols = [
+      { w: 6, label: '\u2116', fmt: 'int', align: 'center' },
+      { w: 16, label: '\u041e\u043f\u043e\u0440\u0430', fmt: 'text' },
+      { w: 8, label: '\u041f\u043e\u0437.', fmt: 'int', align: 'center' },
+      { w: 28, label: '\u0414\u0435\u0442\u0430\u043b\u044c', fmt: 'text' },
+      { w: 14, label: '\u0420\u0430\u0437\u043c\u0435\u0440\u044b', fmt: 'text' },
+      { w: 10, label: '\u041d\u0430 1 \u0448\u0442.', fmt: 'int', align: 'center' },
+      { w: 10, label: '\u041d\u0430 \u0437\u0430\u043a\u0430\u0437', fmt: 'int', align: 'center' },
+      { w: 12, label: '\u041c\u0430\u0441\u0441\u0430 \u0437\u0430\u043a\u0430\u0437\u0430, \u043a\u0433', fmt: 'num3', align: 'right' },
+      { w: 36, label: '\u0417\u0430\u0433\u043e\u0442\u043e\u0432\u043a\u0430', fmt: 'text' }
+    ];
+    var rows = [], n = 0;
+    p.kits.forEach(function (k) {
+      rows.push([{ section: k.no + '. ' + k.designation + ' \u2014 ' + k.name + ', ' + k.qty + ' \u0448\u0442., ' +
+        U.num(k.mass * k.qty, 2) + ' \u043a\u0433' }]);
+      k.parts.forEach(function (r) {
+        n++;
+        rows.push([n, k.designation, r.pos, r.name, r.dimsText, r.qtyEach, r.qtyLot, r.massLot,
+          (r.blank || '') + (r.note ? ' \u2014 ' + r.note : '')]);
+      });
+    });
+    if (p.buy.length) {
+      rows.push([{ section: '\u041f\u043e\u043a\u0443\u043f\u043d\u044b\u0435 \u0438\u0437\u0434\u0435\u043b\u0438\u044f \u043f\u043e \u0437\u0430\u043a\u0430\u0437\u0443' }]);
+      p.buy.forEach(function (b) {
+        n++;
+        rows.push([n, '\u2014', '', b.name, b.dimsText, '', b.qty, b.mass, b.blank]);
+      });
+    }
+    return {
+      name: '\u041a\u043e\u043c\u043f\u043b\u0435\u043a\u0442\u0430\u0446\u0438\u044f',
+      title: '\u041a\u043e\u043c\u043f\u043b\u0435\u043a\u0442\u043e\u0432\u043e\u0447\u043d\u0430\u044f \u0432\u0435\u0434\u043e\u043c\u043e\u0441\u0442\u044c \u0434\u0435\u0442\u0430\u043b\u0435\u0439 \u043e\u043f\u043e\u0440',
+      subtitle: (meta.title ? meta.title + '. ' : '') +
+        '\u041f\u043e\u0437\u0438\u0446\u0438\u0439 \u0437\u0430\u043a\u0430\u0437\u0430: ' + p.kits.length +
+        '; \u043b\u0438\u0441\u0442\u043e\u0432 \u0440\u0430\u0441\u043a\u0440\u043e\u044f: ' + p.stats.sheetCount +
+        '; \u0448\u0442\u0430\u043d\u0433 \u043f\u0440\u043e\u043a\u0430\u0442\u0430: ' + p.stats.barCount + '.',
+      cols: cols, rows: rows, landscape: true
+    };
+  }
+
+  function buildNestDoc(p) {
+    var cols = [
+      { w: 8, label: '\u041b\u0438\u0441\u0442', fmt: 'int', align: 'center' },
+      { w: 16, label: '\u0424\u043e\u0440\u043c\u0430\u0442', fmt: 'text' },
+      { w: 10, label: 't, \u043c\u043c', fmt: 'num1', align: 'center' },
+      { w: 16, label: '\u0421\u0442\u0430\u043b\u044c', fmt: 'text' },
+      { w: 10, label: '\u0414\u0435\u0442\u0430\u043b\u0435\u0439', fmt: 'int', align: 'center' },
+      { w: 12, label: '\u0418\u0441\u043f\u043e\u043b\u044c\u0437., %', fmt: 'num1', align: 'right' },
+      { w: 14, label: '\u041c\u0430\u0441\u0441\u0430 \u0434\u0435\u0442., \u043a\u0433', fmt: 'num2', align: 'right' },
+      { w: 14, label: '\u041c\u0430\u0441\u0441\u0430 \u043b\u0438\u0441\u0442\u0430, \u043a\u0433', fmt: 'num2', align: 'right' },
+      { w: 40, label: '\u0421\u043e\u0441\u0442\u0430\u0432', fmt: 'text' }
+    ];
+    var rows = [];
+    p.sheets.forEach(function (s) {
+      var names = s.placed.map(function (pl) { return pl.part.mark; }).join(', ');
+      rows.push([s.no, s.stock.name, s.t, s.steelName, s.placed.length,
+        s.util * 100, s.mass, s.stockMass, names]);
+    });
+    rows.push([{ section: '\u0418\u0442\u043e\u0433\u043e \u043b\u0438\u0441\u0442\u043e\u0432: ' + p.stats.sheetCount +
+      '; \u0441\u0440\u0435\u0434\u043d\u0435\u0435 \u0438\u0441\u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u043d\u0438\u0435 ' + U.num(p.stats.util * 100, 1) +
+      ' %; \u043e\u0442\u0445\u043e\u0434 ' + U.num(p.stats.wasteMass, 2) + ' \u043a\u0433. \u0417\u0430\u0437\u043e\u0440 \u0440\u0435\u0437\u0430 ' +
+      KERF + ' \u043c\u043c, \u043a\u0440\u043e\u043c\u043a\u0430 ' + EDGE + ' \u043c\u043c.' }]);
+    return {
+      name: '\u0420\u0430\u0441\u043a\u0440\u043e\u0439 \u043b\u0438\u0441\u0442\u0430',
+      title: '\u0412\u0435\u0434\u043e\u043c\u043e\u0441\u0442\u044c \u0440\u0430\u0441\u043a\u0440\u043e\u044f \u043b\u0438\u0441\u0442\u043e\u0432\u043e\u0433\u043e \u043f\u0440\u043e\u043a\u0430\u0442\u0430',
+      subtitle: '\u0421\u0442\u0430\u043d\u0434\u0430\u0440\u0442\u043d\u044b\u0439 \u043b\u0438\u0441\u0442 ' + p.stock.name +
+        ' \u043c\u043c. \u0414\u0435\u0442\u0430\u043b\u0438 \u0440\u0430\u0441\u043a\u043b\u0430\u0434\u044b\u0432\u0430\u044e\u0442\u0441\u044f \u043f\u0440\u044f\u043c\u043e\u0443\u0433\u043e\u043b\u044c\u043d\u0438\u043a\u0430\u043c\u0438 \u0433\u0430\u0431\u0430\u0440\u0438\u0442\u0430 (\u043a\u043e\u0441\u044b\u043d\u043a\u0438 \u2014 \u043f\u043e \u043a\u0430\u0442\u0435\u0442\u0430\u043c).',
+      cols: cols, rows: rows, landscape: true
+    };
+  }
+
+  function buildBarsDoc(p) {
+    var cols = [
+      { w: 8, label: '\u0428\u0442\u0430\u043d\u0433\u0430', fmt: 'int', align: 'center' },
+      { w: 28, label: '\u041f\u0440\u043e\u043a\u0430\u0442', fmt: 'text' },
+      { w: 14, label: '\u0414\u043b\u0438\u043d\u0430 \u0448\u0442\u0430\u043d\u0433\u0438, \u043c\u043c', fmt: 'int', align: 'right' },
+      { w: 10, label: '\u0420\u0435\u0437\u043e\u0432', fmt: 'int', align: 'center' },
+      { w: 36, label: '\u041a\u0430\u0440\u0442\u0430 \u0440\u0435\u0437\u0430, \u043c\u043c', fmt: 'text' },
+      { w: 14, label: '\u041e\u0441\u0442\u0430\u0442\u043e\u043a, \u043c\u043c', fmt: 'int', align: 'right' }
+    ];
+    var rows = [];
+    p.bars.forEach(function (b) {
+      var cuts = b.cuts.map(function (c) { return U.fs(c.len) + ' (' + c.part.mark + ')'; }).join(' + ');
+      rows.push([b.no, b.blank || b.dimsText, b.stockL, b.cuts.length, cuts, Math.round(b.leftover)]);
+    });
+    if (!rows.length) rows.push([{ section: '\u041f\u043e\u0433\u043e\u043d\u043d\u0430\u0436\u043d\u043e\u0433\u043e \u043f\u0440\u043e\u043a\u0430\u0442\u0430 \u0432 \u0437\u0430\u043a\u0430\u0437\u0435 \u043d\u0435\u0442.' }]);
+    rows.push([{ section: '\u0428\u0442\u0430\u043d\u0433\u0438: \u043f\u043e\u043b\u043e\u0441\u0430/\u0443\u0433\u043e\u043b\u043e\u043a/\u0442\u0440\u0443\u0431\u0430 6000 \u043c\u043c, \u0448\u0432\u0435\u043b\u043b\u0435\u0440/\u0434\u0432\u0443\u0442\u0430\u0432\u0440 12000 \u043c\u043c. \u0422\u043e\u0440\u0446\u044b \u2212' +
+      BAR_TRIM + ' \u043c\u043c, \u0440\u0435\u0437 ' + BAR_KERF + ' \u043c\u043c.' }]);
+    return {
+      name: '\u0420\u0435\u0437 \u043f\u0440\u043e\u043a\u0430\u0442\u0430',
+      title: '\u041a\u0430\u0440\u0442\u044b \u0440\u0435\u0437\u0430 \u043f\u043e\u0433\u043e\u043d\u0430\u0436\u043d\u043e\u0433\u043e \u043f\u0440\u043e\u043a\u0430\u0442\u0430',
+      subtitle: '\u041a\u043e\u043c\u043f\u043b\u0435\u043a\u0442\u043e\u0432\u043a\u0430 \u043e\u0442\u0440\u0435\u0437\u043a\u043e\u0432 \u043f\u043e \u043c\u0430\u0440\u043a\u0430\u043c \u043e\u043f\u043e\u0440.',
+      cols: cols, rows: rows, landscape: true
+    };
+  }
+
+  /* ------------------------------------------- SVG раскроя --- */
+  function nestSVG(sheet, meta) {
+    meta = meta || {};
+    var W = 420, H = 297;
+    var st = sheet.stock;
+    var padL = 18, padT = 22, padR = 18, padB = 58;
+    var availW = W - padL - padR, availH = H - padT - padB;
+    var k = Math.min(availW / st.w, availH / st.L);
+    var ox = padL + (availW - st.w * k) / 2;
+    var oy = padT + (availH - st.L * k) / 2;
+    var svg = [];
+    svg.push('<?xml version="1.0" encoding="UTF-8"?>');
+    svg.push('<svg xmlns="http://www.w3.org/2000/svg" width="' + W + 'mm" height="' + H +
+      'mm" viewBox="0 0 ' + W + ' ' + H + '">');
+    svg.push('<rect x="0" y="0" width="' + W + '" height="' + H + '" fill="#fff"/>');
+    svg.push('<rect x="5" y="5" width="' + (W - 10) + '" height="' + (H - 10) + '" fill="none" stroke="#000" stroke-width="0.5"/>');
+    svg.push('<text x="10" y="13" font-family="Arial" font-size="4.2" font-weight="700">' +
+      esc('\u0420\u0430\u0441\u043a\u0440\u043e\u0439 \u043b\u0438\u0441\u0442\u0430 \u2116' + sheet.no + ' \u2014 ' + st.name +
+        ' \u00d7 ' + U.fs(sheet.t) + ' \u043c\u043c, ' + sheet.steelName) + '</text>');
+    svg.push('<text x="10" y="18" font-family="Arial" font-size="3" fill="#333">' +
+      esc((meta.title || '') + (meta.title ? '. ' : '') +
+        '\u0414\u0435\u0442\u0430\u043b\u0435\u0439: ' + sheet.placed.length +
+        '; \u0438\u0441\u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u043d\u0438\u0435 ' + U.num(sheet.util * 100, 1) +
+        ' %; \u043c\u0430\u0441\u0441\u0430 \u0434\u0435\u0442\u0430\u043b\u0435\u0439 ' + U.num(sheet.mass, 2) +
+        ' \u043a\u0433 \u0438\u0437 ' + U.num(sheet.stockMass, 2) + ' \u043a\u0433 \u043b\u0438\u0441\u0442\u0430. \u0417\u0430\u0437\u043e\u0440 ' +
+        KERF + ' \u043c\u043c.') + '</text>');
+    svg.push('<rect x="' + f(ox) + '" y="' + f(oy) + '" width="' + f(st.w * k) + '" height="' + f(st.L * k) +
+      '" fill="#f4f6fa" stroke="#000" stroke-width="0.45"/>');
+    var fills = ['#d9e6f7', '#f7e6d0', '#dcecd6', '#efe0f0', '#f7f0c8', '#dde8ee'];
+    sheet.placed.forEach(function (pl, i) {
+      var x = ox + pl.x * k, y = oy + pl.y * k, w = pl.w * k, h = pl.h * k;
+      svg.push('<rect x="' + f(x) + '" y="' + f(y) + '" width="' + f(w) + '" height="' + f(h) +
+        '" fill="' + fills[i % fills.length] + '" stroke="#123" stroke-width="0.28"/>');
+      var fs = Math.max(1.6, Math.min(3.2, Math.min(w, h) * 0.22));
+      var lines = [pl.part.mark, U.fs(pl.w) + '\u00d7' + U.fs(pl.h) + (pl.rot ? ' \u21bb' : '')];
+      if (h > 8 && w > 14) lines.splice(1, 0, pl.part.name);
+      lines.forEach(function (t, li) {
+        svg.push('<text x="' + f(x + w / 2) + '" y="' + f(y + h / 2 + (li - (lines.length - 1) / 2) * (fs + 0.4)) +
+          '" font-family="Arial" font-size="' + f(fs) + '" text-anchor="middle" dominant-baseline="middle">' +
+          esc(t) + '</text>');
+      });
+    });
+    svg.push('<text x="' + f(ox + st.w * k / 2) + '" y="' + f(oy + st.L * k + 5) +
+      '" font-family="Arial" font-size="3" text-anchor="middle">' + esc(U.fs(st.w) + ' \u043c\u043c') + '</text>');
+    svg.push('<text x="' + f(ox - 3) + '" y="' + f(oy + st.L * k / 2) +
+      '" font-family="Arial" font-size="3" text-anchor="middle" transform="rotate(-90 ' +
+      f(ox - 3) + ' ' + f(oy + st.L * k / 2) + ')">' + esc(U.fs(st.L) + ' \u043c\u043c') + '</text>');
+
+    var tbx = 10, tby = H - 52;
+    svg.push('<text x="' + tbx + '" y="' + tby + '" font-family="Arial" font-size="2.8" font-weight="700">' +
+      esc('\u0421\u043f\u0435\u0446\u0438\u0444\u0438\u043a\u0430\u0446\u0438\u044f \u0432\u044b\u0440\u0435\u0437\u043e\u0432') + '</text>');
+    var col = 0, row = 0;
+    sheet.placed.forEach(function (pl, i) {
+      if (i >= 18) return;
+      var xx = tbx + (i % 3) * 134;
+      var yy = tby + 5 + Math.floor(i / 3) * 3.4;
+      svg.push('<text x="' + f(xx) + '" y="' + f(yy) + '" font-family="Arial" font-size="2.4">' +
+        esc((i + 1) + '. ' + pl.part.mark + '  ' + pl.part.name + '  ' +
+          U.fs(pl.w) + '\u00d7' + U.fs(pl.h) + '\u00d7' + U.fs(sheet.t) +
+          (pl.rot ? ' \u043f\u043e\u0432.' : '')) + '</text>');
+      col = i; row = i;
+    });
+    if (sheet.placed.length > 18) {
+      svg.push('<text x="' + tbx + '" y="' + f(tby + 5 + 6 * 3.4) + '" font-family="Arial" font-size="2.4">' +
+        esc('\u2026 \u0438 \u0435\u0449\u0451 ' + (sheet.placed.length - 18) + ' \u0434\u0435\u0442.') + '</text>');
+    }
+    svg.push('<text x="' + (W - 8) + '" y="' + (H - 7) + '" font-family="Arial" font-size="2.3" text-anchor="end">' +
+      esc('\u0420\u0430\u0431\u043e\u0447\u0438\u0439 \u0447\u0435\u0440\u0442\u0451\u0436 \u0440\u0430\u0441\u043a\u0440\u043e\u044f. \u041f\u0440\u043e\u0432\u0435\u0440\u044c\u0442\u0435 \u043f\u0435\u0440\u0435\u0434 \u0440\u0435\u0437\u043a\u043e\u0439. ' +
+        (meta.date || '')) + '</text>');
+    svg.push('</svg>');
+    return svg.join('');
+  }
+
+  function barSVG(bar, meta) {
+    meta = meta || {};
+    var W = 420, H = 148;
+    var usable = bar.usable, stockL = bar.stockL;
+    var padL = 20, padR = 20, y0 = 48, hBar = 18;
+    var k = (W - padL - padR) / stockL;
+    var svg = [];
+    svg.push('<?xml version="1.0" encoding="UTF-8"?>');
+    svg.push('<svg xmlns="http://www.w3.org/2000/svg" width="' + W + 'mm" height="' + H +
+      'mm" viewBox="0 0 ' + W + ' ' + H + '">');
+    svg.push('<rect x="0" y="0" width="' + W + '" height="' + H + '" fill="#fff"/>');
+    svg.push('<rect x="5" y="5" width="' + (W - 10) + '" height="' + (H - 10) + '" fill="none" stroke="#000" stroke-width="0.45"/>');
+    svg.push('<text x="10" y="14" font-family="Arial" font-size="4" font-weight="700">' +
+      esc('\u041a\u0430\u0440\u0442\u0430 \u0440\u0435\u0437\u0430 \u2116' + bar.no + ' \u2014 ' + (bar.blank || bar.dimsText)) + '</text>');
+    svg.push('<text x="10" y="20" font-family="Arial" font-size="2.8" fill="#333">' +
+      esc((meta.title || '') + (bar.steelName ? '. ' + bar.steelName : '') +
+        '. \u0428\u0442\u0430\u043d\u0433\u0430 ' + U.fs(stockL) + ' \u043c\u043c, \u043e\u0441\u0442\u0430\u0442\u043e\u043a ' +
+        U.fs(Math.round(bar.leftover)) + ' \u043c\u043c.') + '</text>');
+    svg.push('<rect x="' + padL + '" y="' + y0 + '" width="' + f(stockL * k) + '" height="' + hBar +
+      '" fill="#eef2f7" stroke="#000" stroke-width="0.35"/>');
+    var x = padL + BAR_TRIM * k;
+    bar.cuts.forEach(function (c, i) {
+      var w = c.len * k;
+      svg.push('<rect x="' + f(x) + '" y="' + y0 + '" width="' + f(w) + '" height="' + hBar +
+        '" fill="#d9e6f7" stroke="#123" stroke-width="0.28"/>');
+      if (w > 16) {
+        svg.push('<text x="' + f(x + w / 2) + '" y="' + (y0 + hBar / 2) +
+          '" font-family="Arial" font-size="2.4" text-anchor="middle" dominant-baseline="middle">' +
+          esc(c.part.mark + '  ' + U.fs(c.len)) + '</text>');
+      }
+      svg.push('<text x="' + f(x + w / 2) + '" y="' + (y0 + hBar + 5) +
+        '" font-family="Arial" font-size="2.2" text-anchor="middle">' + esc(U.fs(c.len)) + '</text>');
+      x += (c.len + BAR_KERF) * k;
+    });
+    svg.push('<text x="' + padL + '" y="' + (H - 10) + '" font-family="Arial" font-size="2.3">' +
+      esc('\u0422\u043e\u0440\u0446\u044b \u043f\u043e ' + BAR_TRIM + ' \u043c\u043c, \u0440\u0435\u0437 ' + BAR_KERF + ' \u043c\u043c.') + '</text>');
+    svg.push('</svg>');
+    return svg.join('');
+  }
+
+  function stripXml(svg) {
+    return String(svg || '').replace(/<\?xml[^>]*\?>/, '');
+  }
+
+  function shopHTML(items, meta, opts) {
+    meta = meta || {};
+    opts = opts || {};
+    var p = plan(items, opts);
+    var D = OP.docs;
+    var docs = [D.buildOrder(items), buildKitDoc(p, meta), buildNestDoc(p), buildBarsDoc(p)];
+    var css = 'body{font:11px/1.35 Arial,Helvetica,sans-serif;margin:8mm;color:#000}' +
+      'h1{font-size:16px;margin:0 0 2mm}h2{font-size:13px;margin:6mm 0 2mm}' +
+      '.sub{color:#333;margin-bottom:3mm;font-size:11px}' +
+      'table{border-collapse:collapse;width:100%;margin-bottom:6mm}' +
+      'th,td{border:0.4pt solid #666;padding:1.1mm 1.6mm;vertical-align:top}' +
+      'th{background:#eef3fa;font-weight:bold;text-align:center}' +
+      'td.num{text-align:right;white-space:nowrap}td.c{text-align:center}' +
+      'tr.section td{background:#f6f6f6;font-weight:bold}' +
+      '.sheet{page-break-before:always;margin:0}' +
+      '.sheet:first-of-type{page-break-before:auto}' +
+      '.sheet svg{display:block;width:100%;height:auto}' +
+      '@page{size:A3 landscape;margin:6mm}' +
+      '@media print{.noprint{display:none}}';
+    var h = '<!DOCTYPE html><html lang="ru"><head><meta charset="utf-8"><title>' +
+      esc(meta.title || '\u0420\u0430\u0431\u043e\u0447\u0438\u0435 \u0447\u0435\u0440\u0442\u0435\u0436\u0438 \u043f\u0440\u043e\u0438\u0437\u0432\u043e\u0434\u0441\u0442\u0432\u0430') +
+      '</title><style>' + css + '</style></head><body>';
+    h += '<div class="noprint" style="margin-bottom:4mm"><button onclick="window.print()" ' +
+      'style="padding:2mm 5mm;font-size:12px">\u041f\u0435\u0447\u0430\u0442\u044c / \u0421\u043e\u0445\u0440\u0430\u043d\u0438\u0442\u044c \u0432 PDF</button></div>';
+    h += '<h1>\u041a\u043e\u043c\u043f\u043b\u0435\u043a\u0442 \u0440\u0430\u0431\u043e\u0447\u0438\u0445 \u0447\u0435\u0440\u0442\u0435\u0436\u0435\u0439 \u043d\u0430 \u0438\u0437\u0433\u043e\u0442\u043e\u0432\u043b\u0435\u043d\u0438\u0435</h1>';
+    h += '<div class="sub">' + esc((meta.title || '\u0417\u0430\u043a\u0430\u0437') +
+      (meta.customer ? ' \u2014 ' + meta.customer : '') +
+      (meta.author ? '; ' + meta.author : '') +
+      (meta.date ? '; ' + meta.date : '')) + '</div>';
+    docs.forEach(function (doc) {
+      h += '<h2>' + esc(doc.title || doc.name) + '</h2>';
+      if (doc.subtitle) h += '<div class="sub">' + esc(doc.subtitle) + '</div>';
+      h += '<table><thead><tr>';
+      doc.cols.forEach(function (c) { h += '<th>' + esc(c.label) + '</th>'; });
+      h += '</tr></thead><tbody>';
+      doc.rows.forEach(function (r) {
+        if (r.length === 1 && r[0] && typeof r[0] === 'object' && r[0].section !== undefined) {
+          h += '<tr class="section"><td colspan="' + doc.cols.length + '">' + esc(r[0].section) + '</td></tr>';
+          return;
+        }
+        h += '<tr>';
+        r.forEach(function (c, i) {
+          var col = doc.cols[i] || {};
+          var cls = col.align === 'right' ? 'num' : (col.align === 'center' ? 'c' : '');
+          h += '<td class="' + cls + '">' + esc(OP.docs.cellText(doc, i, c)) + '</td>';
+        });
+        h += '</tr>';
+      });
+      h += '</tbody></table>';
+    });
+    p.kits.forEach(function (k) {
+      try {
+        var svg = OP.drawings.renderSVG(k.res, { format: 'A3' });
+        h += '<div class="sheet">' + stripXml(svg) + '</div>';
+      } catch (e) { }
+    });
+    p.sheets.forEach(function (s) {
+      h += '<div class="sheet">' + stripXml(nestSVG(s, meta)) + '</div>';
+    });
+    p.bars.forEach(function (b) {
+      h += '<div class="sheet">' + stripXml(barSVG(b, meta)) + '</div>';
+    });
+    h += '<div class="sub">\u0427\u0435\u0440\u0442\u0435\u0436\u0438 \u0441\u0444\u043e\u0440\u043c\u0438\u0440\u043e\u0432\u0430\u043d\u044b \u043f\u043e \u0440\u0430\u0441\u0447\u0451\u0442\u043d\u044b\u043c \u0440\u0430\u0437\u043c\u0435\u0440\u0430\u043c. ' +
+      '\u041f\u0435\u0440\u0435\u0434 \u0438\u0437\u0433\u043e\u0442\u043e\u0432\u043b\u0435\u043d\u0438\u0435\u043c \u0441\u0432\u0435\u0440\u044c\u0442\u0435 \u0441 \u0440\u0430\u0431\u043e\u0447\u0435\u0439 \u0434\u043e\u043a\u0443\u043c\u0435\u043d\u0442\u0430\u0446\u0438\u0435\u0439 \u0438 \u0441\u0435\u0440\u0438\u0435\u0439. ' +
+      '\u041d\u0435 \u0437\u0430\u043c\u0435\u043d\u044f\u0435\u0442 \u043f\u043e\u0434\u043f\u0438\u0441\u044c \u0413\u0418\u041f\u0430.</div>';
+    h += '</body></html>';
+    return { html: h, plan: p };
+  }
+
+  function printShop(items, meta, opts) {
+    if (!items || !items.length) { alert('\u0417\u0430\u043a\u0430\u0437 \u043f\u0443\u0441\u0442.'); return null; }
+    var pack = shopHTML(items, meta, opts);
+    var w = root.open('', '_blank');
+    if (!w) { alert('\u0420\u0430\u0437\u0440\u0435\u0448\u0438\u0442\u0435 \u0432\u0441\u043f\u043b\u044b\u0432\u0430\u044e\u0449\u0438\u0435 \u043e\u043a\u043d\u0430 \u0434\u043b\u044f \u043f\u0435\u0447\u0430\u0442\u0438.'); return pack.plan; }
+    w.document.open(); w.document.write(pack.html); w.document.close();
+    setTimeout(function () { try { w.focus(); } catch (e) { } }, 200);
+    return pack.plan;
+  }
+
+  function nestPreviewSVG(sheet, maxW) {
+    maxW = maxW || 640;
+    var st = sheet.stock;
+    var k = maxW / st.w;
+    var H = st.L * k;
+    var svg = ['<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + f(st.w) + ' ' + f(st.L) +
+      '" width="' + f(maxW) + '" height="' + f(H) + '">'];
+    svg.push('<rect x="0" y="0" width="' + f(st.w) + '" height="' + f(st.L) + '" fill="#f4f6fa" stroke="#334" stroke-width="' + f(st.w * 0.002) + '"/>');
+    var fills = ['#d9e6f7', '#f7e6d0', '#dcecd6', '#efe0f0', '#f7f0c8'];
+    sheet.placed.forEach(function (pl, i) {
+      svg.push('<rect x="' + f(pl.x) + '" y="' + f(pl.y) + '" width="' + f(pl.w) + '" height="' + f(pl.h) +
+        '" fill="' + fills[i % fills.length] + '" stroke="#123" stroke-width="' + f(st.w * 0.0015) + '"/>');
+      if (Math.min(pl.w, pl.h) > 40) {
+        svg.push('<text x="' + f(pl.x + pl.w / 2) + '" y="' + f(pl.y + pl.h / 2) +
+          '" font-family="Arial" font-size="' + f(Math.min(pl.w, pl.h) * 0.18) +
+          '" text-anchor="middle" dominant-baseline="middle">' + esc(pl.part.mark) + '</text>');
+      }
+    });
+    svg.push('</svg>');
+    return svg.join('');
+  }
+
+  OP.shop = {
+    STOCKS: STOCKS, KERF: KERF, EDGE: EDGE,
+    plan: plan, collect: collect,
+    buildKitDoc: buildKitDoc, buildNestDoc: buildNestDoc, buildBarsDoc: buildBarsDoc,
+    nestSVG: nestSVG, barSVG: barSVG, nestPreviewSVG: nestPreviewSVG,
+    shopHTML: shopHTML, printShop: printShop, stockById: stockById
+  };
+})(typeof globalThis !== 'undefined' ? globalThis : this);
+
+</script>
+
 <!-- интерфейс -->
 <script>
 /* ==== js/ui/app.js ==== */
@@ -7245,6 +7920,7 @@ table.doc tr.pick-cur td { background: var(--accent-soft); }
     sheet: 'auto',
     scale: 'auto',
     v3: { pipeMode: 'solid', grid: true, axes: true, shadow: true, welds: true, chamfer: true, spin: false, preset: 'iso' },
+    shopStock: '1500x6000',
     tab: 'calc'
   };
 
@@ -7285,6 +7961,7 @@ table.doc tr.pick-cur td { background: var(--accent-soft); }
           pipeMode: 'solid', grid: true, axes: true, shadow: true,
           welds: true, chamfer: true, spin: false, preset: 'iso'
         }, state.v3 || {});
+        if (!state.shopStock) state.shopStock = '1500x6000';
       }
     } catch (e) { }
   }
@@ -7799,6 +8476,8 @@ table.doc tr.pick-cur td { background: var(--accent-soft); }
       box.appendChild(el('p', 'hint', 'Заказ пуст. Задайте параметры на вкладке «Расчёт» и нажмите «Добавить в заказ».'));
       $('#orderSummary').innerHTML = '';
       $('#orderMaterials').innerHTML = '';
+      if ($('#orderKit')) $('#orderKit').innerHTML = '';
+      if ($('#orderNest')) $('#orderNest').innerHTML = '';
       return;
     }
 
@@ -7856,6 +8535,12 @@ table.doc tr.pick-cur td { background: var(--accent-soft); }
     card('НДС', U.num(sum.vat, 0) + ' ₽', 'итого с НДС ' + U.num(sum.priceGross, 0) + ' ₽');
     card('Себестоимость', U.num(sum.cost, 0) + ' ₽',
       'прямые ' + U.num(sum.direct, 0) + ' ₽; накладные ' + U.num(sum.overhead, 0) + ' ₽; прибыль ' + U.num(sum.profit, 0) + ' ₽');
+    if (OP.shop) {
+      var shopP = OP.shop.plan(items, { stockId: state.shopStock || '1500x6000' });
+      card('Раскрой / штанги', shopP.stats.sheetCount + ' / ' + shopP.stats.barCount,
+        'листов ' + shopP.stats.sheetCount + ' (до ' + shopP.stock.name + '); использование ' +
+        U.num(shopP.stats.util * 100, 0) + ' %; отход ' + U.num(shopP.stats.wasteMass, 1) + ' кг');
+    }
 
     var mat = el('table', 'doc');
     var mh = el('thead'), mtr = el('tr');
@@ -7875,6 +8560,53 @@ table.doc tr.pick-cur td { background: var(--accent-soft); }
     var mwrap = $('#orderMaterials');
     mwrap.innerHTML = '<h3>Потребность в материалах по заказу</h3>';
     mwrap.appendChild(mat);
+
+    renderShopPreview(items);
+  }
+
+  function shopMeta() {
+    return {
+      title: state.project.title || 'Заказ на изготовление опор',
+      customer: state.project.customer || '',
+      author: state.project.author || '',
+      date: state.project.date || ''
+    };
+  }
+  function renderShopPreview(items) {
+    var kitBox = $('#orderKit'), nestBox = $('#orderNest');
+    if (!kitBox || !nestBox || !OP.shop) return;
+    kitBox.innerHTML = '';
+    nestBox.innerHTML = '';
+    var p = OP.shop.plan(items, { stockId: state.shopStock || '1500x6000' });
+
+    kitBox.appendChild(el('h3', '', 'Комплектация деталей опор'));
+    var wrap = el('div', 'tablewrap');
+    renderDocTable(wrap, OP.shop.buildKitDoc(p, shopMeta()));
+    kitBox.appendChild(wrap);
+
+    nestBox.appendChild(el('h3', '', 'Раскрой металла'));
+    nestBox.appendChild(el('p', 'hint',
+      'Лист ' + p.stock.name + ' мм; зазор реза ' + OP.shop.KERF + ' мм; кромка ' + OP.shop.EDGE +
+      ' мм. Марка на вырезе — обозначение опоры / позиция спецификации. Кнопка «Рабочие чертежи» собирает сборочные виды, карты раскроя и комплектацию в один комплект на печать.'));
+    if (p.sheets.length) {
+      var grid = el('div', 'nestgrid');
+      p.sheets.forEach(function (s) {
+        var cardEl = el('div', 'nestcard');
+        cardEl.appendChild(el('h4', '', 'Лист №' + s.no + ' — ' + s.stock.name + '×' + U.fs(s.t) +
+          ' мм, ' + s.steelName + ' · ' + s.placed.length + ' дет. · ' + U.num(s.util * 100, 0) + ' %'));
+        var hold = el('div');
+        hold.innerHTML = OP.shop.nestPreviewSVG(s, 420);
+        cardEl.appendChild(hold);
+        grid.appendChild(cardEl);
+      });
+      nestBox.appendChild(grid);
+    }
+    if (p.bars.length) {
+      var bwrap = el('div', 'tablewrap');
+      bwrap.style.marginTop = '10px';
+      renderDocTable(bwrap, OP.shop.buildBarsDoc(p));
+      nestBox.appendChild(bwrap);
+    }
   }
 
   /* ============================= ПРАЙС-ЛИСТ ============================ */
@@ -8168,12 +8900,34 @@ table.doc tr.pick-cur td { background: var(--accent-soft); }
     var items = orderItems();
     if (!items.length) { alert('Заказ пуст.'); return; }
     var docs = [D.buildOrder(items)];
+    if (OP.shop) {
+      var plan = OP.shop.plan(items, { stockId: state.shopStock || '1500x6000' });
+      docs.push(OP.shop.buildKitDoc(plan, shopMeta()), OP.shop.buildNestDoc(plan), OP.shop.buildBarsDoc(plan));
+    }
     items.forEach(function (it) {
       docs.push(D.buildSpec(it.res, it.qty), D.buildMaterials(it.res, it.qty),
         D.buildWelds(it.res), D.buildChecks(it.res), D.buildCost(it.res, it.qty),
         D.buildNotes(it.res));
     });
     D.printDocs(docs, { title: 'Заказ на изготовление неподвижных опор' });
+  }
+  function printShopDrawings() {
+    var items = orderItems();
+    if (!items.length) { alert('Заказ пуст. Добавьте опоры в заказ.'); return; }
+    OP.shop.printShop(items, shopMeta(), { stockId: state.shopStock || '1500x6000' });
+  }
+  function exportShopSvg() {
+    var items = orderItems();
+    if (!items.length) { alert('Заказ пуст.'); return; }
+    var p = OP.shop.plan(items, { stockId: state.shopStock || '1500x6000' });
+    if (!p.sheets.length && !p.bars.length) { alert('Нет заготовок для раскроя.'); return; }
+    var parts = [];
+    p.sheets.forEach(function (s) { parts.push(OP.shop.nestSVG(s, shopMeta()).replace(/<\?xml[^>]*\?>/, '')); });
+    p.bars.forEach(function (b) { parts.push(OP.shop.barSVG(b, shopMeta()).replace(/<\?xml[^>]*\?>/, '')); });
+    var html = '<!DOCTYPE html><html lang="ru"><head><meta charset="utf-8"><title>Раскрой</title>' +
+      '<style>body{margin:8mm}svg{display:block;width:100%;height:auto;page-break-after:always}' +
+      '@page{size:A3 landscape;margin:6mm}</style></head><body>' + parts.join('\n') + '</body></html>';
+    D.download(orderFileName('raskroy.html') || 'raskroy.html', html, 'text/html;charset=utf-8');
   }
   function saveProject() {
     var data = JSON.stringify({
@@ -8345,6 +9099,16 @@ table.doc tr.pick-cur td { background: var(--accent-soft); }
     $('#btnOrderXlsx').addEventListener('click', exportXLSX);
     $('#btnOrderCsv').addEventListener('click', exportCSV);
     $('#btnOrderPrint').addEventListener('click', printOrder);
+    $('#btnShopPrint').addEventListener('click', printShopDrawings);
+    $('#btnShopSvg').addEventListener('click', exportShopSvg);
+    if ($('#shopStock')) {
+      $('#shopStock').value = state.shopStock || '1500x6000';
+      $('#shopStock').addEventListener('change', function () {
+        state.shopStock = $('#shopStock').value;
+        save();
+        if (state.tab === 'order') renderOrder();
+      });
+    }
     $('#btnOrderClear').addEventListener('click', function () {
       if (!state.order.length || confirm('Очистить заказ?')) { pushHistory(); state.order = []; save(); renderAll(); }
     });
